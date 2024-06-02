@@ -62,13 +62,13 @@ const sizes = {
 }
 // Model loaders
 const dracoLoader = new DRACOLoader()
-dracoLoader.setDecoderPath('/draco/')
+dracoLoader.setDecoderPath('./draco/')
 const gltfLoader = new GLTFLoader()
 gltfLoader.setDRACOLoader(dracoLoader)
 // Font loaders
 const fontLoader = new TTFLoader();
 // Textures
-const matCapTexture = textureLoader.load('/textures/matcap8.png')
+const matCapTexture = textureLoader.load('./textures/matcap8.png')
 matCapTexture.colorSpace = THREE.SRGBColorSpace
 
 // Axes helper
@@ -94,7 +94,7 @@ let afterimagePass = null
  */
 const addIntroText = () => {
     fontLoader.load(
-        '/fonts/kode-bold.ttf', 
+        './fonts/kode-bold.ttf', 
         (fontData) => {
             const font = new Font(fontData);
             const textGeometry1 = new TextGeometry(
@@ -153,7 +153,7 @@ const addIntroText = () => {
 const addIntroContent = async () => {
     addIntroText()
 
-    model = await loadParticlesModel('/models/wave.glb', COLOR3, COLOR4)
+    model = await loadParticlesModel('./models/wave.glb', COLOR3, COLOR4)
     model.position.x -= 16
     model.position.y += 6
     model.rotation.y += Math.PI / 7
@@ -330,7 +330,7 @@ const addWordCloud = (fontData) => {
 
 const addAboutContent = () => {
     fontLoader.load(
-        '/fonts/NotoSans.ttf', 
+        './fonts/NotoSans.ttf', 
         (fontData) => {
             addAboutGraph(fontData)
             addWordCloud(fontData)
