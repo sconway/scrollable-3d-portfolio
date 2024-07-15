@@ -1,0 +1,233 @@
+$primary: #121212;
+$secondary: #D8DBE2;
+$tertiary: #373f51;
+$highlight: #00f9aa;
+$accent: #A9BCD0;
+
+$barWidthSmall: 200px;
+$barHeightSmall: 20px;
+$barHeightMedium: 30px;
+
+$small: 360px;
+$medium: 600px;
+$large: 900px;
+$xlarge: 1200px;
+
+*
+{
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body
+{
+    height: 100%;
+}
+
+.canvas
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+    font-family: Helvetica, sans-serif;
+}
+
+.css-canvas {
+    pointer-events: none;
+}
+
+.section
+{
+    display: flex;
+    align-items: center;
+    height: 100vh;
+    position: relative;
+    font-family: 'Cabin', sans-serif;
+    color: #ffeded;
+    text-transform: uppercase;
+    font-size: 7vmin;
+    padding-left: 10%;
+    padding-right: 10%;
+}
+
+/*
+* About content 
+*/
+.content-card {
+    border: 1px solid $highlight;
+    position: absolute;
+    width: 250px;
+    opacity: 0;
+    padding: 24px;
+    transition: opacity 500ms ease;
+    z-index: 1;
+}
+
+.content-card.active {
+    opacity: 1;
+}
+
+.content-card__text {
+    color: $highlight;
+    font-size: 24px;
+    font-family: Helvetica, sans-serif;
+}
+
+/*
+* Skills word cloud
+*/
+.skill-card {
+    border: 1px solid rgb(247, 37, 133);
+    background-color: rgba(247, 37, 133, 0.15);
+    box-shadow: 0 0 3px rgba(247, 37, 133, 0.75);
+    min-width: 120px;
+    padding: 16px;
+    text-align: center;
+    transition: box-shadow 150ms ease;
+
+    &:hover {
+        box-shadow: 0 0 12px rgba(235, 121, 172, 0.75);
+
+        &__heading {
+            text-shadow: 0 0 12px rgba(235, 121, 172, 0.75);
+        }
+    }
+    
+    &__heading {
+        color: #fff;
+        text-shadow: 0 0 4px rgba(247, 37, 133, 0.75);
+        font-size: 22px;
+        margin: 0;
+        transition: text-shadow 150ms ease;
+    }
+}
+
+// 
+// Projects
+//
+.project-details {
+    border: 1px solid $highlight;
+    color: $secondary;
+    position: fixed;
+    padding: 24px;
+    height: 600px;
+    width: 400px;
+    // opacity: 0;
+    overflow: scroll;
+    pointer-events: none;
+    transition: opacity 500ms ease;
+    z-index: 3;
+
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: $primary;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: $highlight;
+        border: 1px solid $primary;
+    }
+
+    &__title {
+        font-size: 32px;
+        margin-bottom: 32px;
+    }
+
+    &__description {
+        font-size: 18px;
+        margin-bottom: 16px;
+    }
+
+    &__header {
+        font-size: 24px;
+        color: $highlight;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+
+    &__footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+
+    &__wrapper {
+        margin-bottom: 16px;
+    }
+
+    &__role,
+    &__technologies {
+        font-size: 1.2rem;
+    }
+
+    &__link-wrapper {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    &__link {
+        color: $highlight;
+        display: block;
+        margin: 0;
+        text-decoration: none;
+        text-align: right;
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        font-size: 1.2rem;
+
+        &::after {
+            content: "\2192";
+            color: $highlight;
+            position: relative;
+            left: 3px;
+            top: 1px;
+            transition: left 250ms ease;
+        }
+
+        &:hover {
+            &::after {
+                left: 7px;
+            }
+        }
+
+        &--close {
+            cursor: pointer;
+            right: auto;
+
+            &:hover {
+                &::before {
+                    left: -7px;
+                }
+            }
+
+            &::before {
+                content: "\2190";
+                color: $highlight;
+                position: relative;
+                left: -3px;
+                top: 1px;
+                transition: left 250ms ease;
+            }
+
+            &::after {
+                content: "";
+            }
+        }
+    }
+
+    &__wrapper {
+        &:first-of-type {
+            @media (min-width: $medium) {
+                margin-right: 40px;
+            }
+        }
+    }
+}

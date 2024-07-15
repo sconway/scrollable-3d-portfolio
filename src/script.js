@@ -1,7 +1,10 @@
+import "./scss/index.scss"
 import * as THREE from 'three'
 import GUI from 'lil-gui'
 import gsap from "gsap"
+import Stats from "stats.js"
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { TTFLoader } from 'three/examples/jsm/loaders/TTFLoader.js'
@@ -21,11 +24,23 @@ import { PositionAlongPathState } from "./PositionAlongPathState"
 import { handleScroll, updatePosition } from './PositionAlongPathMethods'
 import { loadModel, loadParticlesModel } from "./model.js"
 import { createBarGraph } from './barGraph'
+import { skills } from './constants/skills.js'
 
-const COLOR1 = '#240668'
-const COLOR2 = '#3A0CA3'
-const COLOR3 = '#7209B7'
-const COLOR4 = '#F72585'
+// const COLOR1 = '#240668'
+const COLOR1 = '#121212'
+// const COLOR2 = '#3A0CA3'
+const COLOR2 = '#373f51'
+// const COLOR3 = '#7209B7'
+const COLOR3 = '#D8DBE2'
+// const COLOR4 = '#F72585'
+const COLOR4 = '#00f9aa'
+
+/**
+ * Stats
+ */
+const stats = new Stats()
+stats.showPanel(0)
+document.body.appendChild(stats.dom)
  
 /**
  * Base
@@ -38,8 +53,10 @@ const SCROLL_DISTANCE_TO_COMPLETION = 900;
 const gui = new GUI({
     width: 300
 })
-const canvas = document.querySelector('canvas.webgl')
+const canvas = document.getElementById('canvas')
+const cssCanvas = document.getElementById('cssCanvas')
 const scene = new THREE.Scene()
+const cssScene = new THREE.Scene()
 const clock = new THREE.Clock()
 const textureLoader = new THREE.TextureLoader()
 const introSectionGroup = new THREE.Group()
@@ -55,6 +72,9 @@ const cursor = {
 }
 // Words
 const wordGroup = new THREE.Group()
+// Skills
+const skillsGroup = new THREE.Group()
+const skillsObjects = []
 // Viewport size
 const sizes = {
     width: window.innerWidth,
@@ -77,14 +97,24 @@ scene.add( axesHelper );
 
 let camera = null
 let renderer = null
+let cssRenderer = null
 let controls = null
 let effectComposer = null
 let curvePath = null
 let scrollY = 0
-let surfacePlaneMaterial = null;
+let surfacePlaneMaterial = null
 let model = null
-let modelRemoved = false
+let sceneModel = null
 let afterimagePass = null
+let aboutContent = null
+let aboutContentActive = false
+let skillsText = null
+let skillsCloudText = null
+let skillsGraph = null
+let skillsContentActive = false
+let skillsCloudActive = false
+let projectsIntroText = null
+let project0Text = null
 
 
 /**
@@ -132,13 +162,15 @@ const addIntroText = () => {
             const text1 = new THREE.Mesh(textGeometry1, textMaterial)
             const text2 = new THREE.Mesh(textGeometry2, textMaterial)
             const textGroup = new THREE.Group()
+
+            text1.rotation.y = Math.PI / 8
             
-            text2.position.y -= 2
             text2.position.x += 3.5
-            text2.position.y += 7.6
+            text2.position.y += 5.6
+            text2.position.z -= 2
             text2.rotation.z -= Math.PI / 12
 
-            textGroup.position.x -= 6
+            textGroup.position.x += 2
             textGroup.position.z -= 20
             textGroup.rotation.y -= Math.PI / 4
             textGroup.rotation.z += Math.PI / 60
@@ -146,20 +178,27 @@ const addIntroText = () => {
             textGroup.add(text1)
             textGroup.add(text2)
             introSectionGroup.add(textGroup)
+
+            addAboutGraph(font)
         }
     )
 }
 
 const addIntroContent = async () => {
+    introSectionGroup.position.set(0, -2, (SCENE_SIZE / 3) + SECTION_SIZE)
+    scene.add(introSectionGroup)
+
     addIntroText()
 
-    model = await loadParticlesModel('./models/wave.glb', COLOR3, COLOR4)
-    model.position.x -= 16
-    model.position.y += 6
-    model.rotation.y += Math.PI / 7
-    introSectionGroup.add(model)
+    model = await loadParticlesModel('./models/wave.glb', COLOR4, COLOR3)
+    sceneModel = model
+    sceneModel.position.x -= 10
+    sceneModel.position.y += 6.5
+    sceneModel.rotation.y += Math.PI / 7
+
+    introSectionGroup.add(sceneModel)
     // Animate the model to full size
-    gsap.to(model.material.uniforms.uScale, {
+    gsap.to(sceneModel.material.uniforms.uScale, {
         value: 1,
         duration: 1,
         ease: 'elastic.out',
@@ -167,196 +206,6 @@ const addIntroContent = async () => {
             addScrollListener()
         }
     })
-}
-
-/**
- * =======================================================================
- * ABOUT SECTION
- * =======================================================================
- */
-const addAboutGraph = (fontData) => {
-    const font = new Font(fontData);
-    const graph = createBarGraph(font);
-
-    graph.position.set(-7, 18, 0)
-    graph.rotation.set(Math.PI, 0, Math.PI / 2)
-    
-    aboutSectionGroup.add(graph)
-}
-
-const addWordCloud = (fontData) => {
-    const font = new Font(fontData);
-    const words = [
-        {
-            value: "Redux",
-            x: 0,
-            y: 0,
-            z: 0
-        },
-        {
-            value: "JQuery",
-            x: 0,
-            y: 0,
-            z: -5
-        },
-        {
-            value: "ThreeJS",
-            x:  0,
-            y: 0,
-            z: 5
-        },
-        {
-            value: "AWS",
-            x: -5,
-            y: 0,
-            z: 0
-        },
-        {
-            value: "Swift",
-            x: 5,
-            y: 0,
-            z: 0
-        },
-        {
-            value: "Jest",
-            x: 0,
-            y: -5,
-            z: 0
-        },
-        {
-            value: "Styled Components",
-            x: 0,
-            y: 5,
-            z: 0
-        },
-        {
-            value: "Cypress",
-            x: -2.5,
-            y: -2.5,
-            z: -2.5
-        },
-        {
-            value: "Detox",
-            x: -2.5,
-            y: 2.5,
-            z: 0
-        },
-        {
-            value: "ExpressJS",
-            x: 2.5,
-            y: -2.5,
-            z: -2.5
-        },
-        {
-            value: "SocketIO",
-            x: -2.5,
-            y: 2.5,
-            z: -2.5
-        },
-        {
-            value: "SanityIO",
-            x: 2.5,
-            y: 2.5,
-            z: -2.5
-        },
-        {
-            value: "Moment",
-            x: 4,
-            y: 2.5,
-            z: 2.5
-        },
-        {
-            value: "Immer",
-            x: -2.5,
-            y: -2.5,
-            z: 2.5
-        },
-        {
-            value: "Service Workers",
-            x: -2.5,
-            y: 2.5,
-            z: 2.5
-        },
-        {
-            value: "ScrollMagic",
-            x: 2.5,
-            y: -2.5,
-            z: 2.5
-        },
-        {
-            value: "BEM",
-            x: 2.5,
-            y: -4,
-            z: 0
-        },
-        {
-            value: "Jenkins",
-            x: -2.5,
-            y: -4,
-            z: 0
-        },
-    ]
-    const textMaterial = new THREE.MeshLambertMaterial({
-        color: new THREE.Color(0xffffff),
-        side: THREE.DoubleSide
-    })
-    
-    for (let i = 0; i < words.length; i++) {
-        const { x, y, z } = words[i]
-        const textGeometry = new TextGeometry(
-            words[i].value,
-            {
-                font: font,
-                size: 0.5,
-                height: 0.1,
-                curveSegents: 6,
-                bevelEnabled: true,
-                bevelThickness: 0.01,
-                bevelSize: 0.005,
-                bevelOffset: 0,
-                bevelSegments: 4,
-            }
-        )
-        const textMesh = new THREE.Mesh(textGeometry, textMaterial)
-
-        textMesh.position.set(x, y, z)
-
-        wordGroup.add(textMesh)
-    }
-
-    wordGroup.position.set(4, 9, 0)
-    aboutSectionGroup.add(wordGroup)
-}
-
-const addAboutContent = () => {
-    fontLoader.load(
-        './fonts/NotoSans.ttf', 
-        (fontData) => {
-            addAboutGraph(fontData)
-            addWordCloud(fontData)
-        }
-    )
-}
-
-/**
- * Second section for technical names and knowledge
- */
- const addAboutSection = () => {
-    const planeMaterial = new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: true
-    })
-    const planeGeometry = new THREE.PlaneGeometry(SECTION_SIZE, SECTION_SIZE)
-    const plane = new THREE.Mesh(
-        planeGeometry,
-        planeMaterial
-    )
-
-    plane.rotation.x = -Math.PI / 2
-    
-    aboutSectionGroup.position.set(0, -2, -((SCENE_SIZE / 4) - (SECTION_SIZE / 2)))
-    aboutSectionGroup.rotation.y = -Math.PI / 2.2
-    aboutSectionGroup.add(plane)
 }
 
 /**
@@ -376,6 +225,9 @@ const addResizeListener = () => {
         renderer.setSize(sizes.width, sizes.height)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
+        // Update CSS renderer
+        cssRenderer.setSize(sizes.width, sizes.height)
+
         // Update composer
         effectComposer.setSize(sizes.width, sizes.height)
         effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -387,7 +239,14 @@ const addResizeListener = () => {
  */
 const addScrollListener = () => {
     window.addEventListener('wheel', (e) => {
-        scrollY += e.deltaY
+        const nextY = scrollY + e.deltaY
+
+        // Make sure we don't keep updating if the user scrolls backwards at the start
+        if (nextY > 0) {
+            scrollY = nextY
+        } else {
+            scrollY = 0
+        }
 
         handleScroll(e, positionAlongPathState)
     })
@@ -413,8 +272,8 @@ const initCamera = () => {
     camera.lookAt(curvePath.getPointAt(0.01))
 
     // Controls
-    // controls = new OrbitControls(camera, canvas)
-    // controls.enableZoom = false
+    controls = new OrbitControls(camera, canvas)
+    controls.enableZoom = false
 
     scene.add(camera)
 
@@ -440,13 +299,22 @@ const initCamera = () => {
  * Configure our renderer
  */
 const initRenderer = () => {
-    renderer = new THREE.WebGLRenderer({
+    renderer = new THREE.WebGL1Renderer({
         canvas: canvas,
         antialias: true
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
+    // CSS renderer
+    cssRenderer = new CSS3DRenderer();
+	cssRenderer.setSize(sizes.width, sizes.height)
+    cssRenderer.domElement.style.position = 'absolute'
+    cssRenderer.domElement.style.left = 0
+    cssRenderer.domElement.style.top = 0
+	cssCanvas.appendChild(cssRenderer.domElement)
+    cssScene.scale.set(0.1, 0.1, 0.1)
+    
     // scene.fog = new THREE.FogExp2( COLOR1, 0.6128 )
     // renderer.setClearColor( scene.fog.color, 1 )
 
@@ -488,9 +356,9 @@ const initRenderer = () => {
 }
 
 const addSurfacePlane = () => {
-    surfacePlaneMaterial = new THREE.MeshBasicMaterial({
+    surfacePlaneMaterial = new THREE.MeshLambertMaterial({
         opacity: 0.4,
-        color: new THREE.Color(COLOR1),
+        color: new THREE.Color(COLOR2),
         side: THREE.DoubleSide,
         transparent: true
     })
@@ -512,7 +380,7 @@ const addSurfacePlane = () => {
  * First section 
  */
 const addIntroSection = () => {
-    const planeMaterial = new THREE.MeshBasicMaterial({
+    const planeMaterial = new THREE.MeshPhongMaterial({
         color: 0xff0000,
         wireframe: true
     })
@@ -524,111 +392,358 @@ const addIntroSection = () => {
 
     plane.rotation.x = -Math.PI / 2
 
-    introSectionGroup.position.set(-((SCENE_SIZE / 4) - (SECTION_SIZE / 2)) , -2, 0)
+    introSectionGroup.position.set(0, -2, (SCENE_SIZE / 3) + SECTION_SIZE)
     introSectionGroup.add(plane)
+
+    addIntroContent()
 }
 
 /**
- * Third section for projects 
- */
- const addProjectsSection = () => {
-    const planeMaterial = new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: true
-    })
-    const planeGeometry = new THREE.PlaneGeometry(SECTION_SIZE, SECTION_SIZE)
-    const plane = new THREE.Mesh(
-        planeGeometry,
-        planeMaterial
-    )
-
-    plane.rotation.x = -Math.PI / 2
-
-    projectsSectionGroup.position.set((SCENE_SIZE / 4) - (SECTION_SIZE / 2), -2, 0)
-    projectsSectionGroup.rotation.y = Math.PI
-    projectsSectionGroup.add(plane)
-}
-
-/**
- * Second section for technical names and knowledge
+ * Last section for contact infomation
  */
  const addContactSection = () => {
-    const planeMaterial = new THREE.MeshBasicMaterial({
+    const cubeMaterial = new THREE.MeshPhongMaterial({
         color: 0xff0000,
-        wireframe: true
     })
-    const planeGeometry = new THREE.PlaneGeometry(SECTION_SIZE, SECTION_SIZE)
-    const plane = new THREE.Mesh(
-        planeGeometry,
-        planeMaterial
+    const cubeGeometry = new THREE.BoxGeometry(5, 5, 5)
+    const cube = new THREE.Mesh(
+        cubeGeometry,
+        cubeMaterial
     )
 
-    plane.rotation.x = -Math.PI / 2
-
-    contactSectionGroup.position.set(0, -2, (SCENE_SIZE / 4) - (SECTION_SIZE / 2))
-    contactSectionGroup.rotation.y = Math.PI * 1.5
-    contactSectionGroup.add(plane)
+    contactSectionGroup.position.set(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 1.5)
+    contactSectionGroup.add(cube)
 }
 
-
+/**
+ * =======================================================================
+ * CAMERA PATH
+ * =======================================================================
+ */
 const addCurvePath = () => {
     curvePath = new THREE.CatmullRomCurve3( [
-        new THREE.Vector3(-(SCENE_SIZE / 3.8), CURVE_PATH_HEIGHT, 25), // slightly ehind Intro section
-        new THREE.Vector3(-(SCENE_SIZE / 3.8), CURVE_PATH_HEIGHT, 0), // Intro section
-        new THREE.Vector3(-(SCENE_SIZE / 3.8), CURVE_PATH_HEIGHT, -(SCENE_SIZE / 5)), // Between intro and about sections
-        new THREE.Vector3(0, CURVE_PATH_HEIGHT, -((SCENE_SIZE / 4) - (SECTION_SIZE / 2))), // About section
-        new THREE.Vector3((SCENE_SIZE / 4) - (SECTION_SIZE / 2), CURVE_PATH_HEIGHT, 0), // Projects section
-        new THREE.Vector3(0, CURVE_PATH_HEIGHT, (SCENE_SIZE / 4) - (SECTION_SIZE / 2)), // Contact Section
-        new THREE.Vector3(-(SCENE_SIZE / 3.8), CURVE_PATH_HEIGHT, 50), // Ease back into the intro section
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, SCENE_SIZE / 2),
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, SCENE_SIZE / 3),
+        new THREE.Vector3(SCENE_SIZE / 12, CURVE_PATH_HEIGHT, SCENE_SIZE / 6), // first bend on the right
+        new THREE.Vector3(0 / 4, CURVE_PATH_HEIGHT, 0),
+        new THREE.Vector3(0 / 4, CURVE_PATH_HEIGHT, 0),
+        new THREE.Vector3(-SCENE_SIZE / 12, CURVE_PATH_HEIGHT, -SCENE_SIZE / 6), // second bend on the left
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE / 3),
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE / 2),
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT * 4, -SCENE_SIZE / 1.5), // high point
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT * 2, -SCENE_SIZE), // ease back down
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 1.5),
     ] );
-    curvePath.closed = true;
+    curvePath.closed = false;
     
-    // const geometry = new THREE.TubeGeometry(curvePath, 100, .05, 8, true)
-    // const material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, side: THREE.DoubleSide });
-    // const mesh = new THREE.Mesh(geometry, material);
+    // SHOW LINE
+    const geometry = new THREE.TubeGeometry(curvePath, 256, 0.15, 2, false)
+    // const points = curvePath.getPoints(32)
+    // const shape = new THREE.Shape(points)
+    // const geometry = new THREE.ShapeGeometry(shape)
+    const material = new THREE.MeshPhongMaterial({ color: COLOR4, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.y = -5
     
-    // scene.add(mesh)
+    scene.add(mesh)
+}
+
+/**
+ * =======================================================================
+ * SKILLS SECTION
+ * =======================================================================
+ */
+const addAboutGraph = (font) => {
+    skillsGraph = createBarGraph(font);
+
+    skillsGraph.position.set(10, 15, -50)
+    skillsGraph.rotation.set(Math.PI, Math.PI * 1.7, Math.PI / 2)
+    
+    scene.add(skillsGraph)
+}
+
+/**
+ * Animate about graph to be visible
+ */
+const animateAboutGraph = (value) => {
+    for (let i = 0; i < skillsGraph.children.length; i++) {
+        const object = skillsGraph.children[i]
+        gsap.to(object.material, {
+            opacity: value,
+            duration: Math.random() * 1 + 1,
+            ease: 'expo.inOut',
+        })
+    }
+}
+
+const addSkillsCloud = () => {
+    // Add a css skill card for each skill in the list
+    for (let i = 0; i < skills.length; i++) {
+        const card = document.createElement('div')
+        card.className = 'skill-card'
+
+        const text = document.createElement('h1')
+        text.className = 'skill-card__heading'
+        text.innerText = skills[i].value
+        card.appendChild(text)
+
+        const skill = new CSS3DObject(card);
+
+        skillsGroup.add(skill)
+    }
+    
+    skillsGroup.position.set(0, 30, -580)
+    skillsGroup.scale.set(0.15, 0.15, 0.15)
+    cssScene.add(skillsGroup)
+
+    const vector = new THREE.Vector3()
+
+    // Helix structure of the skill cards
+    for (let i = 0, l = skillsGroup.children.length; i < l; i++) {
+        const theta = i * 0.475 + Math.PI;
+        const y = - ( i * 22 ) + 350;
+
+        // const object = skillsGroup.children[i]0
+        const object = new THREE.Object3D()
+
+        object.position.setFromCylindricalCoords( 450, theta, y );
+
+        vector.x = object.position.x * 1.2;
+        vector.y = object.position.y;
+        vector.z = object.position.z * 2;
+
+        object.lookAt( vector );
+
+        skillsObjects.push( object );
+    }
+
+    // gui.add(skillsGroup.position, 'x').min(-1000).max(2000).step(1)
+    // gui.add(skillsGroup.position, 'y').min(-1000).max(2000).step(1)
+    // gui.add(skillsGroup.position, 'z').min(-1000).max(2000).step(1)
+    
+    animateSkillsText()
+}
+
+/**
+ * Animate skills into circular structure
+ */
+const animateSkillsText = () => {
+    for (let i = 0; i < skillsGroup.children.length; i++) {
+        const object = skillsGroup.children[i]
+        const target = skillsObjects[i]
+
+        gsap.to(object.position, {
+            x: target.position.x, 
+            y: target.position.y, 
+            z: target.position.z,
+            duration: Math.random() * 2 + 2,
+            delay: 3,
+            ease: 'expo.inOut',
+        })
+    }
+}
+
+/**
+ * ============================================================================
+ * Content cards
+ * ============================================================================
+ */
+const addAboutText = () => {
+    const content = document.createElement('div')
+    content.className = 'content-card active'
+
+    const text = document.createElement('p')
+    text.className = 'content-card__text'
+    text.innerText = "I am a web developer from Boston with passion for building fun and interactive front-end experiences."
+    content.appendChild(text)
+
+    aboutContent = new CSS3DObject(content);
+
+    aboutContent.position.set(370, 80, 250)
+    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+    cssScene.add(aboutContent)
+}
+
+const addSkillsText = () => {
+    const content = document.createElement('div')
+    content.className = 'content-card active'
+
+    const text = document.createElement('p')
+    text.className = 'content-card__text'
+    text.innerText = "Some of my primary technical knowledge includes the following."
+    content.appendChild(text)
+
+    skillsText = new CSS3DObject(content);
+
+    // gui.add(skillsText.position, 'x').min(-1000).max(2000).step(1)
+    // gui.add(skillsText.position, 'y').min(-1000).max(2000).step(1)
+    // gui.add(skillsText.position, 'z').min(-1000).max(2000).step(1)
+    // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
+    skillsText.position.set(125, 60, -120)
+    skillsText.rotation.y = Math.PI / 6
+    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+    cssScene.add(skillsText)
+}
+
+const addSkillsCloudText = () => {
+    const content = document.createElement('div')
+    content.className = 'content-card active'
+
+    const text = document.createElement('p')
+    text.className = 'content-card__text'
+    text.innerText = "Other familiar libraries, languages, and technologies that I've worked with include the following."
+    content.appendChild(text)
+
+    skillsCloudText = new CSS3DObject(content);
+
+    // gui.add(skillsCloudText.position, 'x').min(-1000).max(2000).step(1)
+    // gui.add(skillsCloudText.position, 'y').min(-1000).max(2000).step(1)
+    // gui.add(skillsCloudText.position, 'z').min(-1000).max(2000).step(1)
+    // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
+    skillsCloudText.position.set(-350, 65, -450)
+    skillsCloudText.rotation.y = Math.PI / 6
+    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+    cssScene.add(skillsCloudText)
+}
+
+const addProjectsIntroText = () => {
+    const content = document.createElement('div')
+    content.className = 'content-card active'
+
+    const text = document.createElement('p')
+    text.className = 'content-card__text'
+    text.innerText = "Here are some recent projects that I've worked on."
+    content.appendChild(text)
+
+    projectsIntroText = new CSS3DObject(content);
+
+    // gui.add(projectsIntroText.position, 'x').min(-2000).max(1000).step(1)
+    // gui.add(projectsIntroText.position, 'y').min(-2000).max(1000).step(1)
+    // gui.add(projectsIntroText.position, 'z').min(-2000).max(1000).step(1)
+    // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
+    projectsIntroText.position.set(10, 200, -1250)
+    // skillsCloudText.rotation.y = Math.PI / 6
+    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+    cssScene.add(projectsIntroText)
+}
+/**
+ * ============================================================================
+ * Projects
+ * ============================================================================
+ */
+
+const addProject0 = () => {
+    const content = document.getElementById('project0')
+
+    project0Text = new CSS3DObject(content);
+
+    gui.add(project0Text.position, 'x').min(-2000).max(1000).step(1)
+    gui.add(project0Text.position, 'y').min(-2000).max(1000).step(1)
+    gui.add(project0Text.position, 'z').min(-2000).max(1000).step(1)
+    // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
+    project0Text.position.set(-200, 100, -2200)
+    // skillsCloudText.rotation.y = Math.PI / 6
+    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+    cssScene.add(project0Text)
 }
 
 /**
  * Animate
  */
 const tick = () => {
+    stats.begin()
+
     const elapsedTime = clock.getElapsedTime()
 
-    // controls.update()
+    controls.update()
 
-    if (model) {
-        model.material.uniforms.uTime.value = elapsedTime
-        model.material.uniforms.uCameraZ.value = scrollY
+    if (sceneModel) {
+        sceneModel.material.uniforms.uTime.value = elapsedTime
+        sceneModel.material.uniforms.uCameraZ.value = scrollY
     }
 
     // Update the camera position on our curve path as the user scrolls
     const percentageComplete = updatePosition(curvePath, camera, positionAlongPathState)
+    // console.log("PERCENT COMPLETE: ", percentageComplete)
 
     // Once we pass the intro section, remove the model to improve performance
-    if (percentageComplete > 0.1 && !modelRemoved) {
+    if (percentageComplete >= 0.1 && sceneModel) {
         introSectionGroup.remove(model)
-        modelRemoved = true
+        sceneModel.geometry.dispose()
+        sceneModel.material.dispose()
+        sceneModel = null
         // Update the pass effect so it's not as noticeable 
         afterimagePass.uniforms[ 'damp' ].value = 0.1
     }
 
     // Reset the model animation once we're almost back to the starting point
-    if (percentageComplete > 0.95 && modelRemoved) {
-        introSectionGroup.add(model)
-        scrollY = 0
-        modelRemoved = false
+    if (percentageComplete < 0.1 && !sceneModel && model) {
+        sceneModel = model
+        introSectionGroup.add(sceneModel)
         // Turn the pass effect back up
         afterimagePass.uniforms[ 'damp' ].value = 0.5
     }
 
+    // // About content
+    // if (percentageComplete >= 0.1 && !aboutContentActive) {
+    //     aboutContentActive = true
+    //     aboutContent.element.classList.add('active')
+    // }
+
+    // if (percentageComplete < 0.1 && aboutContentActive) {
+    //     aboutContentActive = false
+    //     aboutContent.element.classList.remove('active')
+    // }
+
+    // if (aboutContent && aboutContentActive) {
+    //     aboutContent.quaternion.copy(camera.quaternion)
+    // }
+
+    // // Skills content
+    // if (percentageComplete >= 0.175 && !skillsContentActive) {
+    //     skillsContentActive = true
+    //     skillsText.element.classList.add('active')
+    //     animateAboutGraph(1)
+    // }
+
+    // if (percentageComplete < 0.175 && skillsContentActive) {
+    //     skillsContentActive = false
+    //     skillsText.element.classList.remove('active')
+    //     animateAboutGraph(0)
+    // }
+
+    // if (skillsText && skillsContentActive) {
+    //     skillsText.quaternion.copy(camera.quaternion)
+    //     // skillsGraph.quaternion.copy(camera.quaternion)
+    // }
+
+    // // Skills cloud content
+    // if (percentageComplete >= 0.27 && !skillsCloudActive) {
+    //     skillsCloudActive = true
+    //     skillsCloudText.element.classList.add('active')
+    //     // animateAboutGraph(1)
+    // }
+
+    // if (percentageComplete < 0.27 && skillsCloudActive) {
+    //     skillsCloudActive = false
+    //     skillsCloudText.element.classList.remove('active')
+    //     // animateAboutGraph(0)
+    // }
+
+    // if (skillsCloudText && skillsCloudActive) {
+    //     skillsCloudText.quaternion.copy(camera.quaternion)
+    //     // skillsGraph.quaternion.copy(camera.quaternion)
+    // }
+
     // Render
-    // renderer.render(scene, camera)
-    effectComposer.render()
+    renderer.render(scene, camera)
+    // effectComposer.render()
+    cssRenderer.render(cssScene, camera);
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
+
+    stats.end()
 }
 
 const init = () => {
@@ -637,16 +752,21 @@ const init = () => {
     initCamera()
     initRenderer()
     addResizeListener()
-    addMouseListener()
+    // addMouseListener()
     // Add the intro section content
-    addIntroContent()
-    // Add the intro section content
-    addAboutContent()
+    // addAboutContent()
     // Sections
     addSurfacePlane()
-    addIntroSection()
-    addAboutSection()
-    addProjectsSection()
+    // addIntroSection()
+    addIntroContent()
+    addAboutText()
+    addSkillsText()
+    addSkillsCloud()
+    addSkillsCloudText()
+    addProjectsIntroText()
+    addProject0()
+    // addAboutSection()
+    // addProjectsSection()
     addContactSection()
     // Start the animation loop
     tick()

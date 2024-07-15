@@ -108,9 +108,11 @@ const createTextMesh = (font, value) => {
             bevelSegments: 4,
         }
     )
-    const textMaterial = new THREE.MeshLambertMaterial({
+    const textMaterial = new THREE.MeshPhongMaterial({
         color: new THREE.Color(0xffffff),
-        side: THREE.DoubleSide
+        opacity: 0,
+        side: THREE.DoubleSide,
+        transparent: true
     })
     const textMesh = new THREE.Mesh(textGeometry, textMaterial)
 
@@ -125,8 +127,10 @@ export const createBarGraph = (font) => {
         const { x, z } = segments[i]
         const height = BOX_HEIGHT * segments[i].value
         const geometry = new THREE.BoxGeometry(BOX_WIDTH, height, BOX_DEPTH)
-        const material = new THREE.MeshLambertMaterial({
-            color: COLORS[i % COLORS.length]
+        const material = new THREE.MeshPhongMaterial({
+            color: COLORS[i % COLORS.length],
+            opacity: 0,
+            transparent: true
         })
         const bar = new THREE.Mesh(geometry, material)
         

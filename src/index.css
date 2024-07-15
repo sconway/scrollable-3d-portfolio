@@ -1,0 +1,91 @@
+*
+{
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body
+{
+    height: 100%;
+}
+
+.canvas
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+    font-family: Helvetica, sans-serif;
+}
+
+.css-canvas {
+    pointer-events: none;
+}
+
+.section
+{
+    display: flex;
+    align-items: center;
+    height: 100vh;
+    position: relative;
+    font-family: 'Cabin', sans-serif;
+    color: #ffeded;
+    text-transform: uppercase;
+    font-size: 7vmin;
+    padding-left: 10%;
+    padding-right: 10%;
+}
+
+/*
+* About content 
+*/
+.content-card {
+    border: 1px solid #00f9aa;
+    position: absolute;
+    width: 250px;
+    opacity: 0;
+    padding: 24px;
+    transition: opacity 500ms ease;
+    z-index: 1;
+}
+
+.content-card.active {
+    opacity: 1;
+}
+
+.content-card__text {
+    color: #00f9aa;
+    font-size: 24px;
+    font-family: Helvetica, sans-serif;
+}
+
+/*
+* Skills word cloud
+*/
+.skill-card {
+    border: 1px solid rgb(247, 37, 133);
+    background-color: rgba(247, 37, 133, 0.15);
+    box-shadow: 0 0 3px rgba(247, 37, 133, 0.75);
+    min-width: 120px;
+    /* height: 160px; */
+    padding: 16px;
+    text-align: center;
+    transition: box-shadow 150ms ease;
+}
+
+.skill-card:hover {
+    box-shadow: 0 0 12px rgba(235, 121, 172, 0.75);
+}
+
+.skill-card__heading {
+    color: #fff;
+    text-shadow: 0 0 4px rgba(247, 37, 133, 0.75);
+    font-size: 22px;
+    margin: 0;
+    transition: text-shadow 150ms ease;
+}
+
+.skill-card:hover .skill-card__heading {
+    text-shadow: 0 0 12px rgba(235, 121, 172, 0.75);
+}

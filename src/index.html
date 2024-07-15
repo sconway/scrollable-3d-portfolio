@@ -4,12 +4,56 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>3D Portfolio</title>
-    <link rel="stylesheet" href="./style.css" />
+    <!-- <link rel="stylesheet" href="./scss/index.scss" /> -->
   </head>
   <body>
-    <canvas id="canvas" class="webgl"></canvas>
+    <canvas id="canvas" class="canvas"></canvas>
+    <div id="cssCanvas" class="css-canvas"></div>
 
-    <div id="content"></div>
+    <!-- Dev samples project -->
+    <div class="project-details" id="project0">
+      <span class="project-details__year">2019</span>
+      <h2 class="project-details__title">Dev Samples</h2>
+      <p class="project-details__description">
+        Devsamples.com is a website that I created to help other developers,
+        while gaining more experience with NextJS, Typescript, and the SanityIO
+        CMS. This project catalogs code snippets for various tasks to help
+        developers quickly find what they are looking for and solve problems.
+      </p>
+      <p class="project-details__description">
+        This site is built in NextJS due to the SEO requirements, and also has a
+        custom ExpressJS server to serve up static files like sitemaps,
+        robots.txt, etc. The front-end is built in React, and makes use of the
+        SanityIO CMS to provide the content for the site. One particular
+        challenge was formatting and styling the code samples, which required a
+        third party library and a few customizations to match the theme of the
+        website.
+      </p>
+      <footer class="project-details__footer">
+        <div class="project-details__wrapper">
+          <h4 class="project-details__header">Technologies</h4>
+          <p class="project-details__technologies">
+            HTML, CSS, Typescript, NextJS, ExpressJS, SanityIO, ScrollMagic
+          </p>
+        </div>
+        <div class="project-details__wrapper">
+          <h4 class="project-details__header">My role</h4>
+          <p class="project-details__role" id="projectRole">
+            Design and development of the entire site.
+          </p>
+        </div>
+      </footer>
+
+      <div class="project-details__link-wrapper">
+        <a
+          href=""
+          class="project-details__link"
+          id="projectLink"
+          target="_blank"
+          >View Site</a
+        >
+      </div>
+    </div>
 
     <script type="module" src="./script.js"></script>
   </body>
