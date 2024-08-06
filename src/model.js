@@ -15,7 +15,9 @@ export const loadModel = (filePath) => {
         loader.load(
             filePath,
             (obj) => {
-                resolve(obj.scene.children[0])
+                const group = new THREE.Group()
+                group.add(...obj.scene.children)
+                resolve(group)
             }
         )
     })

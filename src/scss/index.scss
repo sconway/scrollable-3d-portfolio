@@ -113,25 +113,12 @@ body
     position: fixed;
     padding: 24px;
     height: 600px;
-    width: 400px;
+    width: 450px;
     // opacity: 0;
-    overflow: scroll;
+    // overflow: hidden;
     pointer-events: none;
     transition: opacity 500ms ease;
     z-index: 3;
-
-    &::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: $primary;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: $highlight;
-        border: 1px solid $primary;
-    }
 
     &__title {
         font-size: 32px;

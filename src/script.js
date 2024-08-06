@@ -25,6 +25,7 @@ import { handleScroll, updatePosition } from './PositionAlongPathMethods'
 import { loadModel, loadParticlesModel } from "./model.js"
 import { createBarGraph } from './barGraph'
 import { skills } from './constants/skills.js'
+import { addProject0, addProject0Text } from "./projects/index.js"
 
 // const COLOR1 = '#240668'
 const COLOR1 = '#121212'
@@ -75,6 +76,8 @@ const wordGroup = new THREE.Group()
 // Skills
 const skillsGroup = new THREE.Group()
 const skillsObjects = []
+// Project groups
+const project0Group = new THREE.Group()
 // Viewport size
 const sizes = {
     width: window.innerWidth,
@@ -195,7 +198,8 @@ const addIntroContent = async () => {
     sceneModel.position.x -= 10
     sceneModel.position.y += 6.5
     sceneModel.rotation.y += Math.PI / 7
-
+// console.log("OTHER: ", otherModel)
+//     introSectionGroup.add(otherModel)
     introSectionGroup.add(sceneModel)
     // Animate the model to full size
     gsap.to(sceneModel.material.uniforms.uScale, {
@@ -272,8 +276,8 @@ const initCamera = () => {
     camera.lookAt(curvePath.getPointAt(0.01))
 
     // Controls
-    controls = new OrbitControls(camera, canvas)
-    controls.enableZoom = false
+    // controls = new OrbitControls(camera, canvas)
+    // controls.enableZoom = false
 
     scene.add(camera)
 
@@ -411,7 +415,7 @@ const addIntroSection = () => {
         cubeMaterial
     )
 
-    contactSectionGroup.position.set(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 1.5)
+    contactSectionGroup.position.set(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 2)
     contactSectionGroup.add(cube)
 }
 
@@ -433,6 +437,8 @@ const addCurvePath = () => {
         new THREE.Vector3(0, CURVE_PATH_HEIGHT * 4, -SCENE_SIZE / 1.5), // high point
         new THREE.Vector3(0, CURVE_PATH_HEIGHT * 2, -SCENE_SIZE), // ease back down
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 1.5),
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 1.75),
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 2),
     ] );
     curvePath.closed = false;
     
@@ -443,7 +449,7 @@ const addCurvePath = () => {
     // const geometry = new THREE.ShapeGeometry(shape)
     const material = new THREE.MeshPhongMaterial({ color: COLOR4, side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.y = -5
+    mesh.position.y = -4
     
     scene.add(mesh)
 }
@@ -626,26 +632,79 @@ const addProjectsIntroText = () => {
     // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
     cssScene.add(projectsIntroText)
 }
+
 /**
  * ============================================================================
  * Projects
  * ============================================================================
  */
 
-const addProject0 = () => {
-    const content = document.getElementById('project0')
+const addProjects = () => {
+    addProject0(scene, project0Group)
+    project0Text = addProject0Text(cssScene)
 
-    project0Text = new CSS3DObject(content);
-
-    gui.add(project0Text.position, 'x').min(-2000).max(1000).step(1)
-    gui.add(project0Text.position, 'y').min(-2000).max(1000).step(1)
-    gui.add(project0Text.position, 'z').min(-2000).max(1000).step(1)
-    // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
-    project0Text.position.set(-200, 100, -2200)
-    // skillsCloudText.rotation.y = Math.PI / 6
-    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
-    cssScene.add(project0Text)
 }
+
+// const addProject0 = async () => {
+//     scene.add(project0Group)
+
+//     // Load the project models to be placed
+//     const [tv, laptop, iphone] = await Promise.all([
+//         loadModel('./models/devsamples-screen.glb'),
+//         loadModel('./models/devsamples-laptop.glb'),
+//         loadModel('./models/devsamples-iphone.glb')
+//     ])
+//     // Position/rotate the project models
+//     tv.position.set(-3, 7, -6)
+//     tv.rotation.y += Math.PI / 14
+//     tv.scale.set(3.4, 3.4, 3.4)
+//     laptop.position.set(6, -5, -2)
+//     laptop.rotation.y -= Math.PI / 10
+//     laptop.rotation.x += Math.PI / 14
+//     laptop.rotation.z += Math.PI / 46
+//     laptop.scale.set(2.2, 2.2, 2.2)
+//     iphone.position.set(11, 6, 7)
+//     iphone.rotation.y -= Math.PI / 6
+//     iphone.scale.set(2.2, 2.2, 2.2)
+
+//     project0Group.position.set(12, 0, -250)
+//     project0Group.add(tv, laptop, iphone)
+
+//     // gui.add(project0Group.position, 'x').min(-300).max(300).step(1)
+//     // gui.add(project0Group.position, 'y').min(-300).max(300).step(1)
+//     // gui.add(project0Group.position, 'z').min(-300).max(300).step(1)
+
+//     gui.add(tv.rotation, 'y').min(-Math.PI).max(Math.PI).step(Math.PI/12)
+//     gui.add(laptop.rotation, 'y').min(-Math.PI).max(Math.PI).step(Math.PI/12)
+//     gui.add(iphone.rotation, 'y').min(-Math.PI).max(Math.PI).step(Math.PI/12)
+
+//     // gui.add(tv.position, 'x').min(-100).max(300).step(1)
+//     // gui.add(tv.position, 'y').min(-100).max(300).step(1)
+//     // gui.add(tv.position, 'z').min(-100).max(300).step(1)
+//     // gui.add(laptop.position, 'x').min(-100).max(300).step(1)
+//     // gui.add(laptop.position, 'y').min(-100).max(300).step(1)
+//     // gui.add(laptop.position, 'z').min(-100).max(300).step(1)
+//     // gui.add(iphone.position, 'x').min(-100).max(300).step(1)
+//     // gui.add(iphone.position, 'y').min(-100).max(300).step(1)
+//     // gui.add(iphone.position, 'z').min(-100).max(300).step(1)
+
+//     addProject0Text()
+// }
+
+// const addProject0Text = () => {
+//     const content = document.getElementById('project0')
+
+//     project0Text = new CSS3DObject(content);
+
+//     // gui.add(project0Text.position, 'x').min(-2500).max(1000).step(1)
+//     // gui.add(project0Text.position, 'y').min(-2500).max(1000).step(1)
+//     // gui.add(project0Text.position, 'z').min(-2500).max(1000).step(1)
+//     // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
+//     project0Text.position.set(-350, 30, -2800)
+//     // skillsCloudText.rotation.y = Math.PI / 6
+//     // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+//     cssScene.add(project0Text)
+// }
 
 /**
  * Animate
@@ -655,7 +714,7 @@ const tick = () => {
 
     const elapsedTime = clock.getElapsedTime()
 
-    controls.update()
+    // controls.update()
 
     if (sceneModel) {
         sceneModel.material.uniforms.uTime.value = elapsedTime
@@ -764,7 +823,7 @@ const init = () => {
     addSkillsCloud()
     addSkillsCloudText()
     addProjectsIntroText()
-    addProject0()
+    addProjects()
     // addAboutSection()
     // addProjectsSection()
     addContactSection()
