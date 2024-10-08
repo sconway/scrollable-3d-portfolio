@@ -22,19 +22,27 @@ import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { PositionAlongPathState } from "./PositionAlongPathState"
 import { handleScroll, updatePosition } from './PositionAlongPathMethods'
-import { loadModel, loadParticlesModel } from "./model.js"
+import { loadModel, loadParticlesModel, loadParticlesModel2 } from "./model.js"
 import { createBarGraph } from './barGraph'
 import { skills } from './constants/skills.js'
-import { addProject0, addProject0Text } from "./projects/index.js"
-
-// const COLOR1 = '#240668'
-const COLOR1 = '#121212'
-// const COLOR2 = '#3A0CA3'
-const COLOR2 = '#373f51'
-// const COLOR3 = '#7209B7'
-const COLOR3 = '#D8DBE2'
-// const COLOR4 = '#F72585'
-const COLOR4 = '#00f9aa'
+import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
+    SCENE_SIZE,
+    PLANE_SIZE,
+    CURVE_PATH_HEIGHT,
+    END_POINT,
+    ABOUT_THRESHOLD,
+    SKILLS_GRAPH_TEXT_THRESHOLD,
+    SKILLS_CLOUD_TEXT_THRESHOLD,
+    PROJECTS_TEXT_THRESHOLD,
+    PROJECT_0_THRESHOLD,
+    PROJECT_1_THRESHOLD,
+    PROJECT_2_THRESHOLD,
+    PROJECT_3_THRESHOLD,
+    PROJECT_4_THRESHOLD,
+    PROJECT_5_THRESHOLD,
+    PROJECT_6_THRESHOLD,
+} from "./constants"
+import { addMobileProject, addProject, addProjectText } from "./projects/index.js"
 
 /**
  * Stats
@@ -43,14 +51,6 @@ const stats = new Stats()
 stats.showPanel(0)
 document.body.appendChild(stats.dom)
  
-/**
- * Base
- */
-const SECTION_SIZE = 10
-const SCENE_SIZE = 200
-const CURVE_PATH_HEIGHT = 4
-const SCROLL_DISTANCE_TO_COMPLETION = 900;
-
 const gui = new GUI({
     width: 300
 })
@@ -62,41 +62,46 @@ const clock = new THREE.Clock()
 const textureLoader = new THREE.TextureLoader()
 const introSectionGroup = new THREE.Group()
 const aboutSectionGroup = new THREE.Group()
-const projectsSectionGroup = new THREE.Group()
-const contactSectionGroup = new THREE.Group()
 // Path configuration
 const positionAlongPathState = new PositionAlongPathState()
 // Mouse position
-const cursor = {
-    x: 0,
-    y: 0
-}
+const mouse = new THREE.Vector2()
 // Words
 const wordGroup = new THREE.Group()
 // Skills
 const skillsGroup = new THREE.Group()
 const skillsObjects = []
 // Project groups
-const project0Group = new THREE.Group()
+let project0Group = null
+let project1Group = null
+let project2Group = null
+let project3Group = null
+let project4Group = null
+let project5Group = null
+let project6Group = null
+// Contact
+const contactGroup = new THREE.Group()
+const contactIconGroup = new THREE.Group()
 // Viewport size
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
 }
 // Model loaders
-const dracoLoader = new DRACOLoader()
-dracoLoader.setDecoderPath('./draco/')
-const gltfLoader = new GLTFLoader()
-gltfLoader.setDRACOLoader(dracoLoader)
+// const dracoLoader = new DRACOLoader()
+// dracoLoader.setDecoderPath('./draco/')
+// const gltfLoader = new GLTFLoader()
+// gltfLoader.setDRACOLoader(dracoLoader)
+
 // Font loaders
-const fontLoader = new TTFLoader();
+const fontLoader = new TTFLoader()
 // Textures
 const matCapTexture = textureLoader.load('./textures/matcap8.png')
 matCapTexture.colorSpace = THREE.SRGBColorSpace
 
 // Axes helper
-const axesHelper = new THREE.AxesHelper( 5 );
-scene.add( axesHelper );
+// const axesHelper = new THREE.AxesHelper( 5 );
+// scene.add( axesHelper );
 
 let camera = null
 let renderer = null
@@ -117,7 +122,22 @@ let skillsGraph = null
 let skillsContentActive = false
 let skillsCloudActive = false
 let projectsIntroText = null
+let projectsIntroTextActive = null
+let project0Active = null
+let project1Active = null
+let project2Active = null
+let project3Active = null
+let project4Active = null
+let project5Active = null
+let project6Active = null
 let project0Text = null
+let project1Text = null
+let project2Text = null
+let project3Text = null
+let project4Text = null
+let project5Text = null
+let project6Text = null
+let contactSection = null
 
 
 /**
@@ -198,9 +218,8 @@ const addIntroContent = async () => {
     sceneModel.position.x -= 10
     sceneModel.position.y += 6.5
     sceneModel.rotation.y += Math.PI / 7
-// console.log("OTHER: ", otherModel)
-//     introSectionGroup.add(otherModel)
     introSectionGroup.add(sceneModel)
+    
     // Animate the model to full size
     gsap.to(sceneModel.material.uniforms.uScale, {
         value: 1,
@@ -257,12 +276,12 @@ const addScrollListener = () => {
 }
 
 /**
- * Handle mouse events. Updates the shared cursor values to keep track of the user's mouse position
+ * Handle mouse events. Updates the shared mouse values to keep track of the user's mouse position
  */
 const addMouseListener = () => {
     window.addEventListener('mousemove', (event) => {
-        cursor.x = event.clientX / sizes.width - 0.5
-        cursor.y = event.clientY / sizes.height - 0.5
+        mouse.x = (event.clientX / sizes.width) * 2 - 1
+        mouse.y = (event.clientY / sizes.height) * 2 + 1
     })
 }
 
@@ -366,7 +385,7 @@ const addSurfacePlane = () => {
         side: THREE.DoubleSide,
         transparent: true
     })
-    const planeGeometry = new THREE.PlaneGeometry(SCENE_SIZE*4, SCENE_SIZE*4)
+    const planeGeometry = new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE)
     const plane = new THREE.Mesh(
         planeGeometry,
         surfacePlaneMaterial
@@ -374,10 +393,7 @@ const addSurfacePlane = () => {
     plane.rotation.x = -Math.PI / 2
     plane.position.set(0, -2.1, 0)
 
-    scene.add(plane)
-
-    // Add various section groups
-    scene.add(introSectionGroup, aboutSectionGroup, projectsSectionGroup, contactSectionGroup)
+    scene.add(plane, introSectionGroup)
 }
 
 /**
@@ -397,26 +413,9 @@ const addIntroSection = () => {
     plane.rotation.x = -Math.PI / 2
 
     introSectionGroup.position.set(0, -2, (SCENE_SIZE / 3) + SECTION_SIZE)
-    introSectionGroup.add(plane)
+    // introSectionGroup.add(plane)
 
     addIntroContent()
-}
-
-/**
- * Last section for contact infomation
- */
- const addContactSection = () => {
-    const cubeMaterial = new THREE.MeshPhongMaterial({
-        color: 0xff0000,
-    })
-    const cubeGeometry = new THREE.BoxGeometry(5, 5, 5)
-    const cube = new THREE.Mesh(
-        cubeGeometry,
-        cubeMaterial
-    )
-
-    contactSectionGroup.position.set(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 2)
-    contactSectionGroup.add(cube)
 }
 
 /**
@@ -439,14 +438,12 @@ const addCurvePath = () => {
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 1.5),
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 1.75),
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 2),
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, END_POINT),
     ] );
     curvePath.closed = false;
     
     // SHOW LINE
     const geometry = new THREE.TubeGeometry(curvePath, 256, 0.15, 2, false)
-    // const points = curvePath.getPoints(32)
-    // const shape = new THREE.Shape(points)
-    // const geometry = new THREE.ShapeGeometry(shape)
     const material = new THREE.MeshPhongMaterial({ color: COLOR4, side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.y = -4
@@ -462,20 +459,27 @@ const addCurvePath = () => {
 const addAboutGraph = (font) => {
     skillsGraph = createBarGraph(font);
 
-    skillsGraph.position.set(10, 15, -50)
+    skillsGraph.position.set(-10, 14, -10)
     skillsGraph.rotation.set(Math.PI, Math.PI * 1.7, Math.PI / 2)
-    
+
+    gui.add(skillsGraph.position, 'x').min(-200).max(200).step(1)
+    gui.add(skillsGraph.position, 'y').min(-200).max(200).step(1)
+    gui.add(skillsGraph.position, 'z').min(-200).max(200).step(1)
+
     scene.add(skillsGraph)
 }
 
 /**
  * Animate about graph to be visible
  */
-const animateAboutGraph = (value) => {
+const animateAboutGraph = (show) => {
     for (let i = 0; i < skillsGraph.children.length; i++) {
         const object = skillsGraph.children[i]
+
+        object.visible = show
+
         gsap.to(object.material, {
-            opacity: value,
+            opacity: show ? 1 : 0,
             duration: Math.random() * 1 + 1,
             ease: 'expo.inOut',
         })
@@ -507,12 +511,12 @@ const addSkillsCloud = () => {
     // Helix structure of the skill cards
     for (let i = 0, l = skillsGroup.children.length; i < l; i++) {
         const theta = i * 0.475 + Math.PI;
-        const y = - ( i * 22 ) + 350;
+        const y = - ( i * 32 ) + 460;
 
         // const object = skillsGroup.children[i]0
         const object = new THREE.Object3D()
 
-        object.position.setFromCylindricalCoords( 450, theta, y );
+        object.position.setFromCylindricalCoords( 400, theta, y );
 
         vector.x = object.position.x * 1.2;
         vector.y = object.position.y;
@@ -527,23 +531,29 @@ const addSkillsCloud = () => {
     // gui.add(skillsGroup.position, 'y').min(-1000).max(2000).step(1)
     // gui.add(skillsGroup.position, 'z').min(-1000).max(2000).step(1)
     
-    animateSkillsText()
+    // animateSkillsText()
 }
 
 /**
  * Animate skills into circular structure
  */
-const animateSkillsText = () => {
+const animateSkillsText = (show = true) => {    
     for (let i = 0; i < skillsGroup.children.length; i++) {
         const object = skillsGroup.children[i]
         const target = skillsObjects[i]
+        const duration = show ? Math.random() + 1 : 1
+
+        if (show) {
+            object.element.classList.add("active")
+        } else {
+            object.element.classList.remove("active")
+        }
 
         gsap.to(object.position, {
-            x: target.position.x, 
-            y: target.position.y, 
-            z: target.position.z,
-            duration: Math.random() * 2 + 2,
-            delay: 3,
+            x: show ? target.position.x : 0, 
+            y: show ? target.position.y : 0, 
+            z: show ? target.position.z : 0,
+            duration: duration,
             ease: 'expo.inOut',
         })
     }
@@ -556,7 +566,7 @@ const animateSkillsText = () => {
  */
 const addAboutText = () => {
     const content = document.createElement('div')
-    content.className = 'content-card active'
+    content.className = 'content-card'
 
     const text = document.createElement('p')
     text.className = 'content-card__text'
@@ -564,15 +574,14 @@ const addAboutText = () => {
     content.appendChild(text)
 
     aboutContent = new CSS3DObject(content);
+    aboutContent.position.set(370, 60, 250)
 
-    aboutContent.position.set(370, 80, 250)
-    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
     cssScene.add(aboutContent)
 }
 
 const addSkillsText = () => {
     const content = document.createElement('div')
-    content.className = 'content-card active'
+    content.className = 'content-card'
 
     const text = document.createElement('p')
     text.className = 'content-card__text'
@@ -587,34 +596,29 @@ const addSkillsText = () => {
     // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
     skillsText.position.set(125, 60, -120)
     skillsText.rotation.y = Math.PI / 6
-    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+
     cssScene.add(skillsText)
 }
 
 const addSkillsCloudText = () => {
     const content = document.createElement('div')
-    content.className = 'content-card active'
+    content.className = 'content-card'
 
     const text = document.createElement('p')
     text.className = 'content-card__text'
     text.innerText = "Other familiar libraries, languages, and technologies that I've worked with include the following."
     content.appendChild(text)
 
-    skillsCloudText = new CSS3DObject(content);
-
-    // gui.add(skillsCloudText.position, 'x').min(-1000).max(2000).step(1)
-    // gui.add(skillsCloudText.position, 'y').min(-1000).max(2000).step(1)
-    // gui.add(skillsCloudText.position, 'z').min(-1000).max(2000).step(1)
-    // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
+    skillsCloudText = new CSS3DObject(content)
     skillsCloudText.position.set(-350, 65, -450)
     skillsCloudText.rotation.y = Math.PI / 6
-    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+
     cssScene.add(skillsCloudText)
 }
 
 const addProjectsIntroText = () => {
     const content = document.createElement('div')
-    content.className = 'content-card active'
+    content.className = 'content-card'
 
     const text = document.createElement('p')
     text.className = 'content-card__text'
@@ -622,14 +626,8 @@ const addProjectsIntroText = () => {
     content.appendChild(text)
 
     projectsIntroText = new CSS3DObject(content);
-
-    // gui.add(projectsIntroText.position, 'x').min(-2000).max(1000).step(1)
-    // gui.add(projectsIntroText.position, 'y').min(-2000).max(1000).step(1)
-    // gui.add(projectsIntroText.position, 'z').min(-2000).max(1000).step(1)
-    // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
     projectsIntroText.position.set(10, 200, -1250)
-    // skillsCloudText.rotation.y = Math.PI / 6
-    // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
+    
     cssScene.add(projectsIntroText)
 }
 
@@ -639,72 +637,123 @@ const addProjectsIntroText = () => {
  * ============================================================================
  */
 
-const addProjects = () => {
-    addProject0(scene, project0Group)
-    project0Text = addProject0Text(cssScene)
-
+const addProjectsText = () => {
+    project0Text = addProjectText(cssScene, 'project0', -3000)
+    project1Text = addProjectText(cssScene, 'project1', -4200)
+    project2Text = addProjectText(cssScene, 'project2', -5400)
+    project3Text = addProjectText(cssScene, 'project3', -6600)
+    project4Text = addProjectText(cssScene, 'project4', -7800)
+    project5Text = addProjectText(cssScene, 'project5', -9000)
+    project6Text = addProjectText(cssScene, 'project6', -10200)
 }
 
-// const addProject0 = async () => {
-//     scene.add(project0Group)
+const addProjects = () => {
+    // Dev samples
+    const project0models = ['./models/devsamples-screen.glb', './models/devsamples-laptop.glb', './models/devsamples-iphone.glb']
+    addProject(scene, project0Group, project0models, -270)
+    project0Text = addProjectText(cssScene, 'project0', -3000)
 
-//     // Load the project models to be placed
-//     const [tv, laptop, iphone] = await Promise.all([
-//         loadModel('./models/devsamples-screen.glb'),
-//         loadModel('./models/devsamples-laptop.glb'),
-//         loadModel('./models/devsamples-iphone.glb')
-//     ])
-//     // Position/rotate the project models
-//     tv.position.set(-3, 7, -6)
-//     tv.rotation.y += Math.PI / 14
-//     tv.scale.set(3.4, 3.4, 3.4)
-//     laptop.position.set(6, -5, -2)
-//     laptop.rotation.y -= Math.PI / 10
-//     laptop.rotation.x += Math.PI / 14
-//     laptop.rotation.z += Math.PI / 46
-//     laptop.scale.set(2.2, 2.2, 2.2)
-//     iphone.position.set(11, 6, 7)
-//     iphone.rotation.y -= Math.PI / 6
-//     iphone.scale.set(2.2, 2.2, 2.2)
+    // ARC
+    const project1models = ['./models/arc-screen.glb', './models/arc-laptop.glb', './models/arc-iphone.glb']
+    addProject(scene, project1Group, project1models, -390)
+    project1Text = addProjectText(cssScene, 'project1', -4200)
 
-//     project0Group.position.set(12, 0, -250)
-//     project0Group.add(tv, laptop, iphone)
+    // TD/Traveler
+    const project2models = ['./models/td-iphone.glb', './models/td-iphone2.glb', './models/td-iphone3.glb']
+    addMobileProject(scene, project2Group, project2models, -510)
+    project2Text = addProjectText(cssScene, 'project2', -5400)
 
-//     // gui.add(project0Group.position, 'x').min(-300).max(300).step(1)
-//     // gui.add(project0Group.position, 'y').min(-300).max(300).step(1)
-//     // gui.add(project0Group.position, 'z').min(-300).max(300).step(1)
+    // Father Peyton
+    const project3models = ['./models/fp-screen.glb', './models/fp-laptop.glb', './models/fp-iphone.glb']
+    addProject(scene, project3Group, project3models, -630)
+    project3Text = addProjectText(cssScene, 'project3', -6600)
 
-//     gui.add(tv.rotation, 'y').min(-Math.PI).max(Math.PI).step(Math.PI/12)
-//     gui.add(laptop.rotation, 'y').min(-Math.PI).max(Math.PI).step(Math.PI/12)
-//     gui.add(iphone.rotation, 'y').min(-Math.PI).max(Math.PI).step(Math.PI/12)
+    // Transit Tracker
+    const project4models = ['./models/tt-iphone.glb', './models/tt-iphone2.glb', './models/tt-iphone3.glb']
+    addMobileProject(scene, project4Group, project4models, -750)
+    project4Text = addProjectText(cssScene, 'project4', -7800)
 
-//     // gui.add(tv.position, 'x').min(-100).max(300).step(1)
-//     // gui.add(tv.position, 'y').min(-100).max(300).step(1)
-//     // gui.add(tv.position, 'z').min(-100).max(300).step(1)
-//     // gui.add(laptop.position, 'x').min(-100).max(300).step(1)
-//     // gui.add(laptop.position, 'y').min(-100).max(300).step(1)
-//     // gui.add(laptop.position, 'z').min(-100).max(300).step(1)
-//     // gui.add(iphone.position, 'x').min(-100).max(300).step(1)
-//     // gui.add(iphone.position, 'y').min(-100).max(300).step(1)
-//     // gui.add(iphone.position, 'z').min(-100).max(300).step(1)
+     // Covid Tracker
+     const project5models = ['./models/covid-screen.glb', './models/covid-laptop.glb', './models/covid-screen2.glb']
+     addProject(scene, project5Group, project5models, -870)
+     project5Text = addProjectText(cssScene, 'project5', -9000)
 
-//     addProject0Text()
-// }
+     // World Tweets
+     const project6models = ['./models/tweets-screen.glb', './models/tweets-laptop.glb', './models/tweets-screen2.glb']
+     addProject(scene, project6Group, project6models, -990)
+     project6Text = addProjectText(cssScene, 'project6', -10200)
+}
 
-// const addProject0Text = () => {
-//     const content = document.getElementById('project0')
+// Dev samples
+const addProject0 = () => {
+    project0Group = new THREE.Group()
+    const project0models = ['./models/devsamples-screen.glb', './models/devsamples-laptop.glb', './models/devsamples-iphone.glb']
+    addProject(scene, project0Group, project0models, -270)
+}
 
-//     project0Text = new CSS3DObject(content);
+// ARC
+const addProject1 = () => {
+    project1Group = new THREE.Group()
+    const project1models = ['./models/arc-screen.glb', './models/arc-laptop.glb', './models/arc-iphone.glb']
+    addProject(scene, project1Group, project1models, -390)
+}
 
-//     // gui.add(project0Text.position, 'x').min(-2500).max(1000).step(1)
-//     // gui.add(project0Text.position, 'y').min(-2500).max(1000).step(1)
-//     // gui.add(project0Text.position, 'z').min(-2500).max(1000).step(1)
-//     // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
-//     project0Text.position.set(-350, 30, -2800)
-//     // skillsCloudText.rotation.y = Math.PI / 6
-//     // contentCard.position.set(SCENE_SIZE / 12 + 10, CURVE_PATH_HEIGHT + 2, SCENE_SIZE / 6)
-//     cssScene.add(project0Text)
-// }
+ // TD/Traveler
+const addProject2 = () => {
+    project2Group = new THREE.Group()
+    const project2models = ['./models/td-iphone.glb', './models/td-iphone2.glb', './models/td-iphone3.glb']
+    addMobileProject(scene, project2Group, project2models, -510)
+}
+
+// Father Peyton
+const addProject3 = () => {
+    project3Group = new THREE.Group()
+    const project3models = ['./models/fp-screen.glb', './models/fp-laptop.glb', './models/fp-iphone.glb']
+    addProject(scene, project3Group, project3models, -630)
+}
+
+ // Transit Tracker
+const addProject4 = () => {
+    project4Group = new THREE.Group()
+    const project4models = ['./models/tt-iphone.glb', './models/tt-iphone2.glb', './models/tt-iphone3.glb']
+    addMobileProject(scene, project4Group, project4models, -750)
+}
+ 
+// Covid Tracker
+const addProject5 = () => {
+    project5Group = new THREE.Group()
+    const project5models = ['./models/covid-screen.glb', './models/covid-laptop.glb', './models/covid-screen2.glb']
+    addProject(scene, project5Group, project5models, -870)
+}
+
+// World Tweets
+const addProject6 = () => {
+    project6Group = new THREE.Group()
+    const project6models = ['./models/tweets-screen.glb', './models/tweets-laptop.glb', './models/tweets-screen2.glb']
+    addProject(scene, project6Group, project6models, -990)
+}
+
+/**
+ * ============================================================================
+ * Contacts
+ * ============================================================================
+ */
+const addContactSection = () => {
+    const content = document.getElementById('contactSection')
+    contactSection = new CSS3DObject(content);
+    contactSection.position.set(0, 100, -12600)
+    cssScene.add(contactSection)
+
+    // const cubeGeo = new THREE.BoxGeometry(5, 5)
+    // const cubeMat = new THREE.MeshBasicMaterial({
+    //     color: 0xff0000
+    // })
+    // const mesh = new THREE.Mesh(cubeGeo, cubeMat)
+
+    // mesh.position.set(0, CURVE_PATH_HEIGHT, END_POINT)
+
+    // scene.add(mesh)
+}
 
 /**
  * Animate
@@ -713,7 +762,6 @@ const tick = () => {
     stats.begin()
 
     const elapsedTime = clock.getElapsedTime()
-
     // controls.update()
 
     if (sceneModel) {
@@ -723,10 +771,13 @@ const tick = () => {
 
     // Update the camera position on our curve path as the user scrolls
     const percentageComplete = updatePosition(curvePath, camera, positionAlongPathState)
-    // console.log("PERCENT COMPLETE: ", percentageComplete)
+
+    if (percentageComplete > PROJECT_0_THRESHOLD) {
+        console.log("PERCENT COMPLETE: ", percentageComplete)
+    }
 
     // Once we pass the intro section, remove the model to improve performance
-    if (percentageComplete >= 0.1 && sceneModel) {
+    if (percentageComplete >= ABOUT_THRESHOLD && sceneModel) {
         introSectionGroup.remove(model)
         sceneModel.geometry.dispose()
         sceneModel.material.dispose()
@@ -736,63 +787,203 @@ const tick = () => {
     }
 
     // Reset the model animation once we're almost back to the starting point
-    if (percentageComplete < 0.1 && !sceneModel && model) {
+    if (percentageComplete < ABOUT_THRESHOLD && !sceneModel && model) {
         sceneModel = model
         introSectionGroup.add(sceneModel)
         // Turn the pass effect back up
         afterimagePass.uniforms[ 'damp' ].value = 0.5
     }
 
-    // // About content
-    // if (percentageComplete >= 0.1 && !aboutContentActive) {
-    //     aboutContentActive = true
-    //     aboutContent.element.classList.add('active')
-    // }
+    // About content
+    if (percentageComplete >= ABOUT_THRESHOLD && !aboutContentActive) {
+        aboutContentActive = true
+        aboutContent.element.classList.add('active')
+    }
 
-    // if (percentageComplete < 0.1 && aboutContentActive) {
-    //     aboutContentActive = false
-    //     aboutContent.element.classList.remove('active')
-    // }
+    if (percentageComplete < ABOUT_THRESHOLD && aboutContentActive) {
+        aboutContentActive = false
+        aboutContent.element.classList.remove('active')
+    }
 
-    // if (aboutContent && aboutContentActive) {
-    //     aboutContent.quaternion.copy(camera.quaternion)
-    // }
+    if (aboutContent && aboutContentActive) {
+        aboutContent.quaternion.copy(camera.quaternion)
+    }
 
-    // // Skills content
-    // if (percentageComplete >= 0.175 && !skillsContentActive) {
-    //     skillsContentActive = true
-    //     skillsText.element.classList.add('active')
-    //     animateAboutGraph(1)
-    // }
+    // Skills content
+    if (percentageComplete >= SKILLS_GRAPH_TEXT_THRESHOLD && !skillsContentActive) {
+        skillsContentActive = true
+        skillsText.element.classList.add('active')
+        animateAboutGraph(true)
+    }
 
-    // if (percentageComplete < 0.175 && skillsContentActive) {
-    //     skillsContentActive = false
-    //     skillsText.element.classList.remove('active')
-    //     animateAboutGraph(0)
-    // }
+    if (percentageComplete < SKILLS_GRAPH_TEXT_THRESHOLD && skillsContentActive) {
+        skillsContentActive = false
+        skillsText.element.classList.remove('active')
+        animateAboutGraph(false)
+    }
 
-    // if (skillsText && skillsContentActive) {
-    //     skillsText.quaternion.copy(camera.quaternion)
-    //     // skillsGraph.quaternion.copy(camera.quaternion)
-    // }
+    if (skillsText && skillsContentActive) {
+        skillsText.quaternion.copy(camera.quaternion)
+        // skillsGraph.quaternion.copy(camera.quaternion)
+    }
 
-    // // Skills cloud content
-    // if (percentageComplete >= 0.27 && !skillsCloudActive) {
-    //     skillsCloudActive = true
-    //     skillsCloudText.element.classList.add('active')
-    //     // animateAboutGraph(1)
-    // }
+    // Skills cloud content
+    if (percentageComplete >= SKILLS_CLOUD_TEXT_THRESHOLD && !skillsCloudActive) {
+        skillsCloudActive = true
+        skillsCloudText.element.classList.add('active')
+        animateSkillsText(true)
+    }
 
-    // if (percentageComplete < 0.27 && skillsCloudActive) {
-    //     skillsCloudActive = false
-    //     skillsCloudText.element.classList.remove('active')
-    //     // animateAboutGraph(0)
-    // }
+    if (percentageComplete < SKILLS_CLOUD_TEXT_THRESHOLD && skillsCloudActive) {
+        skillsCloudActive = false
+        skillsCloudText.element.classList.remove('active')
+        animateSkillsText(false)
+    }
 
-    // if (skillsCloudText && skillsCloudActive) {
-    //     skillsCloudText.quaternion.copy(camera.quaternion)
-    //     // skillsGraph.quaternion.copy(camera.quaternion)
-    // }
+    if (skillsCloudText && skillsCloudActive) {
+        skillsCloudText.quaternion.copy(camera.quaternion)
+    }
+
+    // Projects
+    if (percentageComplete >= PROJECTS_TEXT_THRESHOLD && !projectsIntroTextActive) {
+        projectsIntroTextActive = true
+        projectsIntroText.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECTS_TEXT_THRESHOLD && projectsIntroTextActive) {
+        projectsIntroTextActive = false
+        projectsIntroText.element.classList.remove('active')
+    }
+
+    if (projectsIntroText && projectsIntroTextActive) {
+        projectsIntroText.quaternion.copy(camera.quaternion)
+    }
+
+    // Project 0
+    if (percentageComplete >= PROJECT_0_THRESHOLD && !project0Active) {
+        addProject0()
+        project0Active = true
+        project0Text.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECT_0_THRESHOLD && project0Active) {
+        scene.remove(project0Group)
+        project0Group = null
+        project0Active = false
+        project0Text.element.classList.remove('active')
+    }
+
+    if (project0Text && project0Active) {
+        project0Text.quaternion.copy(camera.quaternion)
+    }
+
+    // Project 1
+    if (percentageComplete >= PROJECT_1_THRESHOLD && !project1Active) {
+        addProject1()
+        project1Active = true
+        project1Text.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECT_1_THRESHOLD && project1Active) {
+        scene.remove(project1Group)
+        project1Group = null
+        project1Active = false
+        project1Text.element.classList.remove('active')
+    }
+
+    if (project1Text && project1Active) {
+        project1Text.quaternion.copy(camera.quaternion)
+    }
+
+    // Project 2
+    if (percentageComplete >= PROJECT_2_THRESHOLD && !project2Active) {
+        addProject2()
+        project2Active = true
+        project2Text.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECT_2_THRESHOLD && project2Active) {
+        scene.remove(project2Group)
+        project2Group = null
+        project2Active = false
+        project2Text.element.classList.remove('active')
+    }
+
+    if (project2Text && project2Active) {
+        project2Text.quaternion.copy(camera.quaternion)
+    }
+
+    // Project 3
+    if (percentageComplete >= PROJECT_3_THRESHOLD && !project3Active) {
+        addProject3()
+        project3Active = true
+        project3Text.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECT_3_THRESHOLD && project3Active) {
+        scene.remove(project3Group)
+        project3Group = null
+        project3Active = false
+        project3Text.element.classList.remove('active')
+    }
+
+    if (project3Text && project3Active) {
+        project3Text.quaternion.copy(camera.quaternion)
+    }
+
+    // Project 4
+    if (percentageComplete >= PROJECT_4_THRESHOLD && !project4Active) {
+        addProject4()
+        project4Active = true
+        project4Text.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECT_4_THRESHOLD && project4Active) {
+        scene.remove(project4Group)
+        project4Group = null
+        project4Active = false
+        project4Text.element.classList.remove('active')
+    }
+
+    if (project4Text && project4Active) {
+        project4Text.quaternion.copy(camera.quaternion)
+    }
+
+    // Project 5
+    if (percentageComplete >= PROJECT_5_THRESHOLD && !project5Active) {
+        addProject5()
+        project5Active = true
+        project5Text.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECT_5_THRESHOLD && project5Active) {
+        scene.remove(project5Group)
+        project5Group = null
+        project5Active = false
+        project5Text.element.classList.remove('active')
+    }
+
+    if (project5Text && project5Active) {
+        project5Text.quaternion.copy(camera.quaternion)
+    }
+
+    // Project 6
+    if (percentageComplete >= PROJECT_6_THRESHOLD && !project6Active) {
+        addProject6()
+        project6Active = true
+        project6Text.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECT_6_THRESHOLD && project6Active) {
+        scene.remove(project6Group)
+        project6Group = null
+        project6Active = false
+        project6Text.element.classList.remove('active')
+    }
+
+    if (project6Text && project6Active) {
+        project6Text.quaternion.copy(camera.quaternion)
+    }
 
     // Render
     renderer.render(scene, camera)
@@ -811,21 +1002,20 @@ const init = () => {
     initCamera()
     initRenderer()
     addResizeListener()
-    // addMouseListener()
+    addMouseListener()
     // Add the intro section content
     // addAboutContent()
     // Sections
     addSurfacePlane()
-    // addIntroSection()
-    addIntroContent()
+    addIntroSection()
+    // addIntroContent()
     addAboutText()
     addSkillsText()
     addSkillsCloud()
     addSkillsCloudText()
     addProjectsIntroText()
-    addProjects()
+    addProjectsText()
     // addAboutSection()
-    // addProjectsSection()
     addContactSection()
     // Start the animation loop
     tick()

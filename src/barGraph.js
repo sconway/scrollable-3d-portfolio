@@ -1,13 +1,10 @@
 import * as THREE from 'three'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+import { COLOR1, COLOR2, COLOR3, COLOR4 } from "./constants/"
 
 const BOX_WIDTH = 0.75;
 const BOX_DEPTH = 0.75;
 const BOX_HEIGHT = 8;
-const COLOR1 = '#240668'
-const COLOR2 = '#3A0CA3'
-const COLOR3 = '#7209B7'
-const COLOR4 = '#F72585'
 const COLORS = [COLOR1, COLOR2, COLOR3, COLOR4]
 
 const segments = [
@@ -108,14 +105,15 @@ const createTextMesh = (font, value) => {
             bevelSegments: 4,
         }
     )
-    const textMaterial = new THREE.MeshPhongMaterial({
+    const textMaterial = new THREE.MeshBasicMaterial({
         color: new THREE.Color(0xffffff),
+        transparent: true,
         opacity: 0,
+        wireframe: true,
         side: THREE.DoubleSide,
-        transparent: true
     })
     const textMesh = new THREE.Mesh(textGeometry, textMaterial)
-
+    textMesh.visible = false
     return textMesh
 }
 
@@ -127,13 +125,14 @@ export const createBarGraph = (font) => {
         const { x, z } = segments[i]
         const height = BOX_HEIGHT * segments[i].value
         const geometry = new THREE.BoxGeometry(BOX_WIDTH, height, BOX_DEPTH)
-        const material = new THREE.MeshPhongMaterial({
-            color: COLORS[i % COLORS.length],
+        const material = new THREE.MeshBasicMaterial({
+            color: new THREE.Color(COLORS[i % COLORS.length]),
+            transparent: true,
             opacity: 0,
-            transparent: true
         })
         const bar = new THREE.Mesh(geometry, material)
         
+        bar.visible = false
         bar.position.set(x, BOX_HEIGHT - height / 2, z)
         bar.rotation.y = Math.PI / 6
 

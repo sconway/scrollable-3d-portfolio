@@ -63,10 +63,10 @@ body
     padding: 24px;
     transition: opacity 500ms ease;
     z-index: 1;
-}
 
-.content-card.active {
-    opacity: 1;
+    &.active {
+        opacity: 1;
+    }
 }
 
 .content-card__text {
@@ -79,25 +79,30 @@ body
 * Skills word cloud
 */
 .skill-card {
-    border: 1px solid rgb(247, 37, 133);
-    background-color: rgba(247, 37, 133, 0.15);
-    box-shadow: 0 0 3px rgba(247, 37, 133, 0.75);
+    border: 1px solid rgb(0, 249, 170);
+    background-color: rgba(0, 249, 170, 0.15);
+    box-shadow: 0 0 3px rgba(0, 249, 170, 0.75);
     min-width: 120px;
+    opacity: 0;
     padding: 16px;
     text-align: center;
-    transition: box-shadow 150ms ease;
+    transition: box-shadow 150ms ease, opacity 300ms ease 400ms;
 
     &:hover {
-        box-shadow: 0 0 12px rgba(235, 121, 172, 0.75);
+        box-shadow: 0 0 12px rgba(0, 249, 170, 0.75);
 
         &__heading {
-            text-shadow: 0 0 12px rgba(235, 121, 172, 0.75);
+            text-shadow: 0 0 12px rgba(0, 249, 170, 0.75);
         }
+    }
+
+    &.active {
+        opacity: 1;
     }
     
     &__heading {
         color: #fff;
-        text-shadow: 0 0 4px rgba(247, 37, 133, 0.75);
+        text-shadow: 0 0 4px rgba(0, 249, 170, 0.75);
         font-size: 22px;
         margin: 0;
         transition: text-shadow 150ms ease;
@@ -114,11 +119,14 @@ body
     padding: 24px;
     height: 600px;
     width: 450px;
-    // opacity: 0;
-    // overflow: hidden;
     pointer-events: none;
+    opacity: 0;
     transition: opacity 500ms ease;
     z-index: 3;
+
+    &.active {
+        opacity: 1;
+    }
 
     &__title {
         font-size: 32px;
@@ -216,5 +224,84 @@ body
                 margin-right: 40px;
             }
         }
+    }
+}
+
+// Contact section
+.contact-section {
+    border: 1px solid $highlight;
+    color: $secondary;
+    font-family: Helvetica, sans-serif;
+    position: fixed;
+    padding: 24px;
+    min-width: 1800px;
+    // opacity: 0;
+    // overflow: hidden;
+    pointer-events: none;
+    transition: opacity 500ms ease;
+    z-index: 3;
+
+    .contact-section__icons {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 64px;
+    }
+
+    .contact-section__icon {
+        display:block;
+        position: relative;
+        height: 500px;
+        width: 500px;
+
+        &:hover {
+            svg {
+                &:first-of-type {
+                    // transition: opacity 150ms ease;
+                    opacity: 1;
+                }
+                
+                &:last-of-type {
+                    opacity: 0;
+                }
+            }
+        }
+
+        svg {
+            opacity: 0;
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            transition: opacity 300ms ease;
+
+            &:last-of-type {
+                opacity: 1;
+                
+                g {
+                    filter: url(#glow);
+                }
+            }
+
+            g {
+                fill: $secondary;
+                cursor: pointer;
+            }
+        }
+
+        &.github {
+        }
+
+        &.linkedin {
+            // margin-right: 56px;
+        }
+
+        &.email {
+
+        }
+    }
+
+    .contact-section__text {
+        font-size: 86px;
+        text-align: center;
     }
 }

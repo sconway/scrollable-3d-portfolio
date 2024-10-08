@@ -21,10 +21,11 @@ export function updatePosition(curvePath, object, positionAlongPathState) {
 		// The percentage complete towards the total time to animate, movementDuration.
 		const timeLeftPercentage = timeElapsed / positionAlongPathState.movementDuration;
 		
-		const minimumDegreeOfChange = 0.2;
+		const minimumDegreeOfChange = 1.2;
 		const maximumDegreeOfChange = 4.0;
 		// const minimumDegreeOfChange = 0.001;
 		// const maximumDegreeOfChange = 0.9;
+		// console.log("PERCENTAGE: ", positionAlongPathState.currentPercentageOnPath )
 
 		let interpolationFactor = Math.max(timeLeftPercentage, minimumDegreeOfChange);
 		interpolationFactor = Math.min(interpolationFactor, maximumDegreeOfChange);
@@ -73,10 +74,17 @@ export function updatePosition(curvePath, object, positionAlongPathState) {
 		if (typeof lookAtPosition === 'undefined') {
 			lookAtPosition = 0.9899
 		}
+		// console.log("CURRENT DISTANCE: ", positionAlongPathState.currentDistanceOnPath)
+		// console.log("CURRENT PERCENTAGE: ", positionAlongPathState.currentPercentageOnPath)
+		// console.log("STARTING DISTANCE: ", positionAlongPathState.startingDistance)
+		// console.log("TARGET DISTANCE: ", positionAlongPathState.targetDistance)
 
 		try {
 			const newPosition = curvePath.getPointAt(positionAlongPathState.currentPercentageOnPath);
 			const newLookAt = curvePath.getPointAt(lookAtPosition);
+
+			// look slightly above the curve path
+			newLookAt.y += 0.0001	
 
 			object.position.copy(newPosition);
 			object.lookAt(newLookAt);
