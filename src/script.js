@@ -41,6 +41,7 @@ import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
     PROJECT_4_THRESHOLD,
     PROJECT_5_THRESHOLD,
     PROJECT_6_THRESHOLD,
+    CONTACT_SECTION_THRESHOLD,
 } from "./constants"
 import { addMobileProject, addProject, addProjectText } from "./projects/index.js"
 
@@ -130,6 +131,7 @@ let project3Active = null
 let project4Active = null
 let project5Active = null
 let project6Active = null
+let contactSectionActive = null
 let project0Text = null
 let project1Text = null
 let project2Text = null
@@ -647,43 +649,6 @@ const addProjectsText = () => {
     project6Text = addProjectText(cssScene, 'project6', -10200)
 }
 
-const addProjects = () => {
-    // Dev samples
-    const project0models = ['./models/devsamples-screen.glb', './models/devsamples-laptop.glb', './models/devsamples-iphone.glb']
-    addProject(scene, project0Group, project0models, -270)
-    project0Text = addProjectText(cssScene, 'project0', -3000)
-
-    // ARC
-    const project1models = ['./models/arc-screen.glb', './models/arc-laptop.glb', './models/arc-iphone.glb']
-    addProject(scene, project1Group, project1models, -390)
-    project1Text = addProjectText(cssScene, 'project1', -4200)
-
-    // TD/Traveler
-    const project2models = ['./models/td-iphone.glb', './models/td-iphone2.glb', './models/td-iphone3.glb']
-    addMobileProject(scene, project2Group, project2models, -510)
-    project2Text = addProjectText(cssScene, 'project2', -5400)
-
-    // Father Peyton
-    const project3models = ['./models/fp-screen.glb', './models/fp-laptop.glb', './models/fp-iphone.glb']
-    addProject(scene, project3Group, project3models, -630)
-    project3Text = addProjectText(cssScene, 'project3', -6600)
-
-    // Transit Tracker
-    const project4models = ['./models/tt-iphone.glb', './models/tt-iphone2.glb', './models/tt-iphone3.glb']
-    addMobileProject(scene, project4Group, project4models, -750)
-    project4Text = addProjectText(cssScene, 'project4', -7800)
-
-     // Covid Tracker
-     const project5models = ['./models/covid-screen.glb', './models/covid-laptop.glb', './models/covid-screen2.glb']
-     addProject(scene, project5Group, project5models, -870)
-     project5Text = addProjectText(cssScene, 'project5', -9000)
-
-     // World Tweets
-     const project6models = ['./models/tweets-screen.glb', './models/tweets-laptop.glb', './models/tweets-screen2.glb']
-     addProject(scene, project6Group, project6models, -990)
-     project6Text = addProjectText(cssScene, 'project6', -10200)
-}
-
 // Dev samples
 const addProject0 = () => {
     project0Group = new THREE.Group()
@@ -743,16 +708,6 @@ const addContactSection = () => {
     contactSection = new CSS3DObject(content);
     contactSection.position.set(0, 100, -12600)
     cssScene.add(contactSection)
-
-    // const cubeGeo = new THREE.BoxGeometry(5, 5)
-    // const cubeMat = new THREE.MeshBasicMaterial({
-    //     color: 0xff0000
-    // })
-    // const mesh = new THREE.Mesh(cubeGeo, cubeMat)
-
-    // mesh.position.set(0, CURVE_PATH_HEIGHT, END_POINT)
-
-    // scene.add(mesh)
 }
 
 /**
@@ -773,7 +728,6 @@ const tick = () => {
     const percentageComplete = updatePosition(curvePath, camera, positionAlongPathState)
 
     if (percentageComplete > PROJECT_0_THRESHOLD) {
-        console.log("PERCENT COMPLETE: ", percentageComplete)
     }
 
     // Once we pass the intro section, remove the model to improve performance
@@ -983,6 +937,21 @@ const tick = () => {
 
     if (project6Text && project6Active) {
         project6Text.quaternion.copy(camera.quaternion)
+    }
+
+    // Contact section
+    if (percentageComplete >= CONTACT_SECTION_THRESHOLD && !contactSectionActive) {
+        contactSectionActive = true
+        contactSection.element.classList.add('active')
+    }
+
+    if (percentageComplete < CONTACT_SECTION_THRESHOLD && contactSectionActive) {
+        contactSectionActive = false
+        contactSection.element.classList.remove('active')
+    }
+
+    if (contactSection && contactSectionActive) {
+        contactSection.quaternion.copy(camera.quaternion)
     }
 
     // Render
