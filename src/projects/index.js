@@ -13,7 +13,7 @@ const animateToPosition = (group, x, y, z) => {
         y,
         z,
         duration: 1,
-        ease: 'expo.inOut',
+        ease: 'power3.out',
     })
 }
 
@@ -23,7 +23,7 @@ const animateToScale = (group, x, y, z) => {
         y,
         z,
         duration: 1,
-        ease: 'expo.inOut',
+        ease: 'power3.out',
     })
 }
 

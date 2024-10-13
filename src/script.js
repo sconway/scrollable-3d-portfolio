@@ -218,14 +218,18 @@ const addIntroContent = async () => {
     model = await loadParticlesModel('./models/wave.glb', COLOR4, COLOR3)
     sceneModel = model
     sceneModel.position.x -= 10
-    sceneModel.position.y += 6.5
+    sceneModel.position.y += 7
     sceneModel.rotation.y += Math.PI / 7
     introSectionGroup.add(sceneModel)
+
+    // gui.add(sceneModel.position, 'x').min(-10).max(10).step(1)
+    // gui.add(sceneModel.position, 'y').min(-10).max(10).step(1)
+    // gui.add(sceneModel.position, 'z').min(-10).max(10).step(1)
     
     // Animate the model to full size
     gsap.to(sceneModel.material.uniforms.uScale, {
         value: 1,
-        duration: 1,
+        duration: 1.5,
         ease: 'elastic.out',
         onComplete: () => {
             addScrollListener()
@@ -445,7 +449,7 @@ const addCurvePath = () => {
     curvePath.closed = false;
     
     // SHOW LINE
-    const geometry = new THREE.TubeGeometry(curvePath, 256, 0.15, 2, false)
+    const geometry = new THREE.TubeGeometry(curvePath, 1028, 0.05, 3, false)
     const material = new THREE.MeshPhongMaterial({ color: COLOR4, side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.y = -4
@@ -464,9 +468,9 @@ const addAboutGraph = (font) => {
     skillsGraph.position.set(-10, 14, -10)
     skillsGraph.rotation.set(Math.PI, Math.PI * 1.7, Math.PI / 2)
 
-    gui.add(skillsGraph.position, 'x').min(-200).max(200).step(1)
-    gui.add(skillsGraph.position, 'y').min(-200).max(200).step(1)
-    gui.add(skillsGraph.position, 'z').min(-200).max(200).step(1)
+    // gui.add(skillsGraph.position, 'x').min(-200).max(200).step(1)
+    // gui.add(skillsGraph.position, 'y').min(-200).max(200).step(1)
+    // gui.add(skillsGraph.position, 'z').min(-200).max(200).step(1)
 
     scene.add(skillsGraph)
 }
@@ -628,7 +632,7 @@ const addProjectsIntroText = () => {
     content.appendChild(text)
 
     projectsIntroText = new CSS3DObject(content);
-    projectsIntroText.position.set(10, 200, -1250)
+    projectsIntroText.position.set(10, 180, -1250)
     
     cssScene.add(projectsIntroText)
 }
@@ -638,7 +642,6 @@ const addProjectsIntroText = () => {
  * Projects
  * ============================================================================
  */
-
 const addProjectsText = () => {
     project0Text = addProjectText(cssScene, 'project0', -3000)
     project1Text = addProjectText(cssScene, 'project1', -4200)
@@ -796,15 +799,21 @@ const tick = () => {
 
     if (skillsCloudText && skillsCloudActive) {
         skillsCloudText.quaternion.copy(camera.quaternion)
+        skillsGroup.rotation.x += (mouse.x * 0.25 - skillsGroup.rotation.x)
+        skillsGroup.rotation.y += (-mouse.y * 0.25 - skillsGroup.rotation.y)
+        // skillsGroup.rotation.y += Math.sin(mouse.x/50)//Math.atan(mouse.x / mouse.y) * (180 / Math.PI) + (mouse.y < 0 ? 180 : 0);
+        // skillsGroup.rotation.x += Math.sin(mouse.y/50)//Math.atan(mouse.x / mouse.y) * (180 / Math.PI) + (mouse.y < 0 ? 180 : 0);
     }
 
     // Projects
     if (percentageComplete >= PROJECTS_TEXT_THRESHOLD && !projectsIntroTextActive) {
+        positionAlongPathState.lengthToScroll = 800
         projectsIntroTextActive = true
         projectsIntroText.element.classList.add('active')
     }
 
     if (percentageComplete < PROJECTS_TEXT_THRESHOLD && projectsIntroTextActive) {
+        positionAlongPathState.lengthToScroll = 1400
         projectsIntroTextActive = false
         projectsIntroText.element.classList.remove('active')
     }

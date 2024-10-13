@@ -124,7 +124,7 @@ export const loadParticlesModel2 = (filePath, color1, color2) => {
 
             // Particles geometry
             const sampler = new MeshSurfaceSampler(mesh).build()
-            const numParticles = 20000
+            const numParticles = 30000
             const particlesGeometry = new THREE.BufferGeometry()
             const particlesPosition = new Float32Array(numParticles * 3)
             const particlesRandomness = new Float32Array(numParticles * 3)

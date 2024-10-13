@@ -61,8 +61,8 @@ export function updatePosition(curvePath, object, positionAlongPathState) {
 		if (previousPercentage && nextPercentage && percentageDiff > 0.1) {
 			positionAlongPathState.currentDistanceOnPath = previousPercentage
 			positionAlongPathState.currentPercentageOnPath = previousDistance
-			positionAlongPathState.startingDistance = 0.9899
-			positionAlongPathState.targetDistance = 0.9899
+			positionAlongPathState.startingDistance = 0.998
+			positionAlongPathState.targetDistance = 0.998
 		}
 
 		if (typeof positionAlongPathState.currentPercentageOnPath === 'undefined') {
@@ -72,12 +72,8 @@ export function updatePosition(curvePath, object, positionAlongPathState) {
 		let lookAtPosition = positionAlongPathState.currentPercentageOnPath + 0.00001;
 
 		if (typeof lookAtPosition === 'undefined') {
-			lookAtPosition = 0.9899
+			lookAtPosition = 0.998
 		}
-		// console.log("CURRENT DISTANCE: ", positionAlongPathState.currentDistanceOnPath)
-		// console.log("CURRENT PERCENTAGE: ", positionAlongPathState.currentPercentageOnPath)
-		// console.log("STARTING DISTANCE: ", positionAlongPathState.startingDistance)
-		// console.log("TARGET DISTANCE: ", positionAlongPathState.targetDistance)
 
 		try {
 			const newPosition = curvePath.getPointAt(positionAlongPathState.currentPercentageOnPath);
