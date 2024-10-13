@@ -42,6 +42,10 @@ import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
     PROJECT_5_THRESHOLD,
     PROJECT_6_THRESHOLD,
     CONTACT_SECTION_THRESHOLD,
+    INITIAL_SCROLL_DISTANCE_FAST,
+    INITIAL_SCROLL_DISTANCE_DEFAULT,
+    PROJECTS_SCROLL_DISTANCE_FAST,
+    PROJECTS_SCROLL_DISTANCE_DEFAULT,
 } from "./constants"
 import { addMobileProject, addProject, addProjectText } from "./projects/index.js"
 
@@ -108,6 +112,8 @@ let camera = null
 let renderer = null
 let cssRenderer = null
 let controls = null
+let lastTime = performance.now()
+let initialScrollValuesSet = false
 let effectComposer = null
 let curvePath = null
 let scrollY = 0
@@ -434,8 +440,6 @@ const addCurvePath = () => {
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, SCENE_SIZE / 2),
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, SCENE_SIZE / 3),
         new THREE.Vector3(SCENE_SIZE / 12, CURVE_PATH_HEIGHT, SCENE_SIZE / 6), // first bend on the right
-        new THREE.Vector3(0 / 4, CURVE_PATH_HEIGHT, 0),
-        new THREE.Vector3(0 / 4, CURVE_PATH_HEIGHT, 0),
         new THREE.Vector3(-SCENE_SIZE / 12, CURVE_PATH_HEIGHT, -SCENE_SIZE / 6), // second bend on the left
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE / 3),
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE / 2),
@@ -508,7 +512,7 @@ const addSkillsCloud = () => {
         skillsGroup.add(skill)
     }
     
-    skillsGroup.position.set(0, 30, -580)
+    skillsGroup.position.set(40, 30, -570)
     skillsGroup.scale.set(0.15, 0.15, 0.15)
     cssScene.add(skillsGroup)
 
@@ -516,8 +520,8 @@ const addSkillsCloud = () => {
 
     // Helix structure of the skill cards
     for (let i = 0, l = skillsGroup.children.length; i < l; i++) {
-        const theta = i * 0.475 + Math.PI;
-        const y = - ( i * 32 ) + 460;
+        const theta = i * 0.425 + Math.PI;
+        const y = - ( i * 34 ) + 450;
 
         // const object = skillsGroup.children[i]0
         const object = new THREE.Object3D()
@@ -533,11 +537,27 @@ const addSkillsCloud = () => {
         skillsObjects.push( object );
     }
 
+    // for ( let i = 0, l = skillsGroup.children.length; i < l; i ++ ) {
+
+    //     const phi = Math.acos( - 1 + ( 3 * i ) / l );
+    //     const theta = Math.sqrt( l * Math.PI ) * phi;
+
+    //     const object = new THREE.Object3D();
+
+    //     object.position.setFromSphericalCoords( 300, phi, theta );
+
+    //     vector.copy( object.position ).multiplyScalar( 2 );
+
+    //     object.lookAt( vector );
+
+    //     skillsObjects.push( object );
+
+    // }
+
     // gui.add(skillsGroup.position, 'x').min(-1000).max(2000).step(1)
     // gui.add(skillsGroup.position, 'y').min(-1000).max(2000).step(1)
     // gui.add(skillsGroup.position, 'z').min(-1000).max(2000).step(1)
     
-    // animateSkillsText()
 }
 
 /**
@@ -616,8 +636,12 @@ const addSkillsCloudText = () => {
     content.appendChild(text)
 
     skillsCloudText = new CSS3DObject(content)
-    skillsCloudText.position.set(-350, 65, -450)
+    skillsCloudText.position.set(-300, 65, -520)
     skillsCloudText.rotation.y = Math.PI / 6
+
+    // gui.add(skillsCloudText.position, 'x').min(-1000).max(2000).step(1)
+    // gui.add(skillsCloudText.position, 'y').min(-1000).max(2000).step(1)
+    // gui.add(skillsCloudText.position, 'z').min(-1000).max(2000).step(1)
 
     cssScene.add(skillsCloudText)
 }
@@ -721,6 +745,17 @@ const tick = () => {
 
     const elapsedTime = clock.getElapsedTime()
     // controls.update()
+    
+    // Calculate frames per second of the screen
+    const now = performance.now();
+    const deltaTime = now - lastTime;
+    const fps = 1000 / deltaTime;
+
+    // Set initial values that determine the scroll speed based on the user's screen FPS
+    if (!initialScrollValuesSet) {
+        initialScrollValuesSet = true
+        positionAlongPathState.lengthToScroll = fps > 60 ? INITIAL_SCROLL_DISTANCE_FAST : INITIAL_SCROLL_DISTANCE_DEFAULT
+    }
 
     if (sceneModel) {
         sceneModel.material.uniforms.uTime.value = elapsedTime
@@ -729,9 +764,6 @@ const tick = () => {
 
     // Update the camera position on our curve path as the user scrolls
     const percentageComplete = updatePosition(curvePath, camera, positionAlongPathState)
-
-    if (percentageComplete > PROJECT_0_THRESHOLD) {
-    }
 
     // Once we pass the intro section, remove the model to improve performance
     if (percentageComplete >= ABOUT_THRESHOLD && sceneModel) {
@@ -781,7 +813,6 @@ const tick = () => {
 
     if (skillsText && skillsContentActive) {
         skillsText.quaternion.copy(camera.quaternion)
-        // skillsGraph.quaternion.copy(camera.quaternion)
     }
 
     // Skills cloud content
@@ -799,21 +830,20 @@ const tick = () => {
 
     if (skillsCloudText && skillsCloudActive) {
         skillsCloudText.quaternion.copy(camera.quaternion)
+        // Rotate the skills cloud based on the mouse position
         skillsGroup.rotation.x += (mouse.x * 0.25 - skillsGroup.rotation.x)
         skillsGroup.rotation.y += (-mouse.y * 0.25 - skillsGroup.rotation.y)
-        // skillsGroup.rotation.y += Math.sin(mouse.x/50)//Math.atan(mouse.x / mouse.y) * (180 / Math.PI) + (mouse.y < 0 ? 180 : 0);
-        // skillsGroup.rotation.x += Math.sin(mouse.y/50)//Math.atan(mouse.x / mouse.y) * (180 / Math.PI) + (mouse.y < 0 ? 180 : 0);
     }
 
     // Projects
     if (percentageComplete >= PROJECTS_TEXT_THRESHOLD && !projectsIntroTextActive) {
-        positionAlongPathState.lengthToScroll = 800
+        positionAlongPathState.lengthToScroll = fps > 60 ? PROJECTS_SCROLL_DISTANCE_FAST : PROJECTS_SCROLL_DISTANCE_DEFAULT
         projectsIntroTextActive = true
         projectsIntroText.element.classList.add('active')
     }
 
     if (percentageComplete < PROJECTS_TEXT_THRESHOLD && projectsIntroTextActive) {
-        positionAlongPathState.lengthToScroll = 1400
+        positionAlongPathState.lengthToScroll = fps > 60 ? INITIAL_SCROLL_DISTANCE_FAST : INITIAL_SCROLL_DISTANCE_DEFAULT
         projectsIntroTextActive = false
         projectsIntroText.element.classList.remove('active')
     }
@@ -967,6 +997,8 @@ const tick = () => {
     renderer.render(scene, camera)
     // effectComposer.render()
     cssRenderer.render(cssScene, camera);
+
+    lastTime = now
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)

@@ -97,7 +97,7 @@ export const addMobileProject = async (scene, group, modelPaths, z) => {
     animateToPosition(iphone3, 22, 6, 7)
     animateToScale(iphone3, 4, 4, 4)
 
-    group.position.set(12, 0, z)
+    group.position.set(12, 1, z)
     group.add(iphone1, iphone2, iphone3)
 
     // gui.add(group.position, 'x').min(-300).max(300).step(1)

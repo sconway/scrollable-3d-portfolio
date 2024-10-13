@@ -3,7 +3,14 @@ export const SCENE_SIZE = 200
 export const PLANE_SIZE = 10000
 export const CURVE_PATH_HEIGHT = 4
 export const END_POINT = -SCENE_SIZE * 5 - 100
+
+// Scroll speed
+export const INITIAL_SCROLL_DISTANCE_DEFAULT = 1800
+export const INITIAL_SCROLL_DISTANCE_FAST = 3000
+export const PROJECTS_SCROLL_DISTANCE_DEFAULT = 800
+export const PROJECTS_SCROLL_DISTANCE_FAST = 1600
  
+// Section scroll thresholds
 export const ABOUT_THRESHOLD = 0.034
 export const SKILLS_GRAPH_TEXT_THRESHOLD = 0.054
 export const SKILLS_CLOUD_TEXT_THRESHOLD = 0.098
