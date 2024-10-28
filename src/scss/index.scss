@@ -38,6 +38,27 @@ body
     pointer-events: none;
 }
 
+.reset-button {
+    background: transparent;
+    border: 2px solid $secondary;
+    color: $secondary;
+    cursor: pointer;
+    font-family: Helvetica, sans-serif;
+    letter-spacing: 2px;
+    padding: 12px 24px;
+    position: fixed;
+    left: 16px;
+    top: 16px;
+    z-index: 9999;
+    text-transform: uppercase;
+    transition: all 300ms ease;
+
+    &:hover {
+        background: $secondary;
+        color: $primary;
+    }
+}
+
 .section
 {
     display: flex;
@@ -68,11 +89,15 @@ body
     &.active {
         opacity: 1;
     }
+
+    &.wide {
+        width: 300px;
+    }
 }
 
 .content-card__text {
     color: $highlight;
-    font-size: 24px;
+    font-size: 22px;
     font-family: Helvetica, sans-serif;
 }
 

@@ -36,19 +36,20 @@ export const addProject = async (scene, group, modelPaths, z) => {
     // tv.position.set(-3, 7, -6)
     // tv.scale.set(3.4, 3.4, 3.4)
     tv.rotation.y += Math.PI / 14
-    animateToPosition(tv, -3, 7, -6)
+    tv.rotation.x += Math.PI / 20
+    animateToPosition(tv, -4, 10, -6)
     animateToScale(tv, 3.4, 3.4, 3.4)
     // laptop.position.set(6, -5, -2)
     // laptop.scale.set(2.2, 2.2, 2.2)
     laptop.rotation.y -= Math.PI / 10
     laptop.rotation.x += Math.PI / 14
     laptop.rotation.z += Math.PI / 46
-    animateToPosition(laptop, 6, -5, -2)
-    animateToScale(laptop, 2.2, 2.2, 2.2)
+    animateToPosition(laptop, 7, 0, -2)
+    animateToScale(laptop, 2.8, 2.8, 2.8)
     // iphone.position.set(11, 6, 7)
     // iphone.scale.set(2.2, 2.2, 2.2)
     iphone.rotation.y -= Math.PI / 6
-    animateToPosition(iphone, 11, 6, 7)
+    animateToPosition(iphone, 14, 6, 7)
     animateToScale(iphone, 2.2, 2.2, 2.2)
 
     group.position.set(12, 0, z)

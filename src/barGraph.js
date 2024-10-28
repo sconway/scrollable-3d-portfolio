@@ -5,12 +5,12 @@ import { COLOR1, COLOR2, COLOR3, COLOR4 } from "./constants/"
 const BOX_WIDTH = 0.75;
 const BOX_DEPTH = 0.75;
 const BOX_HEIGHT = 8;
-const COLORS = [COLOR1, COLOR2, COLOR3, COLOR4]
+const COLORS = [COLOR3, COLOR2, COLOR4]
 
 const segments = [
     {
-        name: "HTML",
-        value: 1,
+        name: "Javascript",
+        value: 0.95,
         textX: 8,
         textY: 0.5,
         textZ: 0,
@@ -20,7 +20,7 @@ const segments = [
     },
     {
         name: "CSS",
-        value: 0.9,
+        value: 0.95,
         textX: 8,
         textY: 0.5,
         textZ: 0,
@@ -29,8 +29,8 @@ const segments = [
         z: 0
     },
     {
-        name: "Javascript",
-        value: 0.8,
+        name: "HTML",
+        value: 0.9,
         textX: 8,
         textY: 0.5,
         textZ: 0,
@@ -40,7 +40,7 @@ const segments = [
     },
     {
         name: "React",
-        value: 0.7,
+        value: 0.8,
         textX: 8,
         textY: 0.5,
         textZ: 0,
@@ -50,7 +50,7 @@ const segments = [
     },
     {
         name: "React Native",
-        value: 0.65,
+        value: 0.75,
         textX: 8,
         textY: 0.5,
         textZ: 0,
@@ -60,7 +60,7 @@ const segments = [
     },
     {
         name: "Typescript",
-        value: 0.6,
+        value: 0.7,
         textX: 8,
         textY: 0.5,
         textZ: 0,
@@ -70,7 +70,7 @@ const segments = [
     },
     {
         name: "GraphQL",
-        value: 0.6,
+        value: 0.65,
         textX: 8,
         textY: 0.5,
         textZ: 0,
@@ -80,7 +80,7 @@ const segments = [
     },
     {
         name: "NodeJS",
-        value: 0.6,
+        value: 0.65,
         textX: 8,
         textY: 0.5,
         textZ: 0,
@@ -112,6 +112,7 @@ const createTextMesh = (font, value) => {
         wireframe: true,
         side: THREE.DoubleSide,
     })
+    
     const textMesh = new THREE.Mesh(textGeometry, textMaterial)
     textMesh.visible = false
     return textMesh
@@ -124,17 +125,17 @@ export const createBarGraph = (font) => {
         // Create the dimensions, geometry, and mesh for our bars
         const { x, z } = segments[i]
         const height = BOX_HEIGHT * segments[i].value
-        const geometry = new THREE.BoxGeometry(BOX_WIDTH, height, BOX_DEPTH)
-        const material = new THREE.MeshBasicMaterial({
+        const boxGeometry = new THREE.BoxGeometry(BOX_WIDTH, height, BOX_DEPTH)
+        const edgesGeometry = new THREE.EdgesGeometry(boxGeometry);
+        const matLine = new THREE.MeshBasicMaterial( {
             color: new THREE.Color(COLORS[i % COLORS.length]),
-            transparent: true,
-            opacity: 0,
-        })
-        const bar = new THREE.Mesh(geometry, material)
+            // linewidth: 50,
+        } );
+        const bar = new THREE.LineSegments(edgesGeometry, matLine)
         
         bar.visible = false
         bar.position.set(x, BOX_HEIGHT - height / 2, z)
-        bar.rotation.y = Math.PI / 6
+        bar.rotation.y = Math.PI / (Math.random() * 6 + 1)
 
         // Create the text for each bar
         const barText = createTextMesh(font, segments[i])

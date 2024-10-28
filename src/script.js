@@ -1,18 +1,22 @@
 import "./scss/index.scss"
 import * as THREE from 'three'
+// import { pass, mrt, output, bloom, emissive } from 'three/tsl';
 import GUI from 'lil-gui'
 import gsap from "gsap"
 import Stats from "stats.js"
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { BlendFunction, BloomEffect, EdgeDetectionMode, EffectComposer, EffectPass, PredicationMode, RenderPass, SMAAEffect, SMAAPreset, SelectiveBloomEffect } from "postprocessing";
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+// import { pass, mrt, output, bloom, emissive } from 'three/tsl';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { TTFLoader } from 'three/examples/jsm/loaders/TTFLoader.js'
 import { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+// import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+// import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 import { SobelOperatorShader } from 'three/addons/shaders/SobelOperatorShader.js';
 import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
@@ -49,6 +53,7 @@ import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
 } from "./constants"
 import { addMobileProject, addProject, addProjectText } from "./projects/index.js"
 
+
 /**
  * Stats
  */
@@ -66,13 +71,10 @@ const cssScene = new THREE.Scene()
 const clock = new THREE.Clock()
 const textureLoader = new THREE.TextureLoader()
 const introSectionGroup = new THREE.Group()
-const aboutSectionGroup = new THREE.Group()
 // Path configuration
-const positionAlongPathState = new PositionAlongPathState()
+let positionAlongPathState = new PositionAlongPathState()
 // Mouse position
 const mouse = new THREE.Vector2()
-// Words
-const wordGroup = new THREE.Group()
 // Skills
 const skillsGroup = new THREE.Group()
 const skillsObjects = []
@@ -84,20 +86,11 @@ let project3Group = null
 let project4Group = null
 let project5Group = null
 let project6Group = null
-// Contact
-const contactGroup = new THREE.Group()
-const contactIconGroup = new THREE.Group()
 // Viewport size
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
 }
-// Model loaders
-// const dracoLoader = new DRACOLoader()
-// dracoLoader.setDecoderPath('./draco/')
-// const gltfLoader = new GLTFLoader()
-// gltfLoader.setDRACOLoader(dracoLoader)
-
 // Font loaders
 const fontLoader = new TTFLoader()
 // Textures
@@ -121,6 +114,7 @@ let surfacePlaneMaterial = null
 let model = null
 let sceneModel = null
 let afterimagePass = null
+let outlinePass = null
 let aboutContent = null
 let aboutContentActive = false
 let skillsText = null
@@ -146,6 +140,9 @@ let project4Text = null
 let project5Text = null
 let project6Text = null
 let contactSection = null
+let composer = null
+let effect = null
+let smaaEffect = null
 
 
 /**
@@ -163,7 +160,7 @@ const addIntroText = () => {
                 {
                     font: font,
                     size: 5,
-                    height: 2,
+                    depth: 2,
                     curveSegents: 6,
                     bevelEnabled: true,
                     bevelThickness: 0.03,
@@ -177,7 +174,7 @@ const addIntroText = () => {
                 {
                     font: font,
                     size: 3.5,
-                    height: 2,
+                    depth: 2,
                     curveSegents: 6,
                     bevelEnabled: true,
                     bevelThickness: 0.03,
@@ -209,8 +206,6 @@ const addIntroText = () => {
             textGroup.add(text1)
             textGroup.add(text2)
             introSectionGroup.add(textGroup)
-
-            addAboutGraph(font)
         }
     )
 }
@@ -264,8 +259,8 @@ const addResizeListener = () => {
         cssRenderer.setSize(sizes.width, sizes.height)
 
         // Update composer
-        effectComposer.setSize(sizes.width, sizes.height)
-        effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        // effectComposer.setSize(sizes.width, sizes.height)
+        // effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     })
 }
 
@@ -311,10 +306,12 @@ const initCamera = () => {
     // controls.enableZoom = false
 
     scene.add(camera)
+}
 
-    /**
-     * Lights
-     */
+/**
+ * Add some lighting to the scene.
+ */
+const initLights = () => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 2.4)
     scene.add(ambientLight)
 
@@ -334,9 +331,12 @@ const initCamera = () => {
  * Configure our renderer
  */
 const initRenderer = () => {
-    renderer = new THREE.WebGL1Renderer({
+    renderer = new THREE.WebGLRenderer({
         canvas: canvas,
-        antialias: true
+        antialias: true,
+        powerPreference: "high-performance",
+        stencil: false,
+        // depth: false
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -349,45 +349,24 @@ const initRenderer = () => {
     cssRenderer.domElement.style.top = 0
 	cssCanvas.appendChild(cssRenderer.domElement)
     cssScene.scale.set(0.1, 0.1, 0.1)
-    
-    // scene.fog = new THREE.FogExp2( COLOR1, 0.6128 )
-    // renderer.setClearColor( scene.fog.color, 1 )
+}
 
-    // // Post processing
-    effectComposer = new EffectComposer(renderer)
-    effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    effectComposer.setSize(sizes.width, sizes.height)
-    
-    const renderPass = new RenderPass(scene, camera)
-    effectComposer.addPass(renderPass)
+const addPostProcessing = () => {
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
 
-    // const glitchPass = new GlitchPass()
-    // effectComposer.addPass(glitchPass)
+    smaaEffect = new SMAAEffect(BlendFunction.ADD, SMAAPreset.LOW, EdgeDetectionMode.COLOR, PredicationMode.DISABLED);
 
-    const bloomPass = new UnrealBloomPass()
-    bloomPass.strength = 0.3
-    effectComposer.addPass(bloomPass)
+    effect = new SelectiveBloomEffect(scene, camera, {
+        blendFunction: BlendFunction.ADD,
+        mipmapBlur: true,
+        luminanceThreshold: 0.4,
+        luminanceSmoothing: 0.2,
+        intensity: 1.0
+    });
 
-    // const renderPixelatedPass = new RenderPixelatedPass( 6, scene, camera );
-    // effectComposer.addPass( renderPixelatedPass );
-
-    // const effectSobel = new ShaderPass( SobelOperatorShader );
-    // effectSobel.uniforms[ 'resolution' ].value.x = window.innerWidth * window.devicePixelRatio;
-    // effectSobel.uniforms[ 'resolution' ].value.y = window.innerHeight * window.devicePixelRatio;
-    // effectComposer.addPass( effectSobel );
-
-    // const bokehPass = new BokehPass( scene, camera, {
-    //     focus: 10.0,
-    //     aperture: 5,
-    //     maxblur: 0.01
-    // } );
-    // const outputPass = new OutputPass();
-    // effectComposer.addPass( bokehPass );
-    // effectComposer.addPass( outputPass );
-
-    afterimagePass = new AfterimagePass()
-    afterimagePass.uniforms[ 'damp' ].value = 0.6
-    effectComposer.addPass(afterimagePass)
+    const effectPass = new EffectPass(camera, smaaEffect, effect);
+    composer.addPass(effectPass);
 }
 
 const addSurfacePlane = () => {
@@ -405,29 +384,7 @@ const addSurfacePlane = () => {
     plane.rotation.x = -Math.PI / 2
     plane.position.set(0, -2.1, 0)
 
-    scene.add(plane, introSectionGroup)
-}
-
-/**
- * First section 
- */
-const addIntroSection = () => {
-    const planeMaterial = new THREE.MeshPhongMaterial({
-        color: 0xff0000,
-        wireframe: true
-    })
-    const planeGeometry = new THREE.PlaneGeometry(SECTION_SIZE, SECTION_SIZE)
-    const plane = new THREE.Mesh(
-        planeGeometry,
-        planeMaterial
-    )
-
-    plane.rotation.x = -Math.PI / 2
-
-    introSectionGroup.position.set(0, -2, (SCENE_SIZE / 3) + SECTION_SIZE)
-    // introSectionGroup.add(plane)
-
-    addIntroContent()
+    scene.add(plane)
 }
 
 /**
@@ -461,16 +418,36 @@ const addCurvePath = () => {
     scene.add(mesh)
 }
 
+const addResetListener = () => {
+    document.getElementById("resetButton").addEventListener("click", resetCurvePath)
+}
+
+/**
+ * Reset the scroll animation back to the starting point
+ */
+const resetCurvePath = () => {
+    scrollY = 0
+    sceneModel = model
+    introSectionGroup.add(sceneModel)
+    positionAlongPathState = new PositionAlongPathState()
+    camera.position.copy(curvePath.getPointAt(0))
+    camera.lookAt(curvePath.getPointAt(0.01))
+    handleScroll({deltaY: 1}, positionAlongPathState)
+}
+
 /**
  * =======================================================================
  * SKILLS SECTION
  * =======================================================================
  */
-const addAboutGraph = (font) => {
-    skillsGraph = createBarGraph(font);
+const addAboutGraph = async () => {
+    skillsGraph = await loadModel("./models/bars.glb");
+    skillsGraph.position.set(-33, -3, -13)
+    skillsGraph.rotation.z -= Math.PI / 14
+    skillsGraph.rotation.y -= Math.PI / 3.4
 
-    skillsGraph.position.set(-10, 14, -10)
-    skillsGraph.rotation.set(Math.PI, Math.PI * 1.7, Math.PI / 2)
+    skillsGraph.children.forEach(mesh => mesh.visible = false)
+    // skillsGraph.children.forEach(mesh => effect.selection.add(mesh))
 
     // gui.add(skillsGraph.position, 'x').min(-200).max(200).step(1)
     // gui.add(skillsGraph.position, 'y').min(-200).max(200).step(1)
@@ -512,7 +489,7 @@ const addSkillsCloud = () => {
         skillsGroup.add(skill)
     }
     
-    skillsGroup.position.set(40, 30, -570)
+    skillsGroup.position.set(50, 30, -600)
     skillsGroup.scale.set(0.15, 0.15, 0.15)
     cssScene.add(skillsGroup)
 
@@ -553,10 +530,6 @@ const addSkillsCloud = () => {
     //     skillsObjects.push( object );
 
     // }
-
-    // gui.add(skillsGroup.position, 'x').min(-1000).max(2000).step(1)
-    // gui.add(skillsGroup.position, 'y').min(-1000).max(2000).step(1)
-    // gui.add(skillsGroup.position, 'z').min(-1000).max(2000).step(1)
     
 }
 
@@ -615,11 +588,6 @@ const addSkillsText = () => {
     content.appendChild(text)
 
     skillsText = new CSS3DObject(content);
-
-    // gui.add(skillsText.position, 'x').min(-1000).max(2000).step(1)
-    // gui.add(skillsText.position, 'y').min(-1000).max(2000).step(1)
-    // gui.add(skillsText.position, 'z').min(-1000).max(2000).step(1)
-    // gui.add(skillsText.rotation, 'y').min(0).max(Math.PI*2).step(Math.PI/24)
     skillsText.position.set(125, 60, -120)
     skillsText.rotation.y = Math.PI / 6
 
@@ -639,24 +607,24 @@ const addSkillsCloudText = () => {
     skillsCloudText.position.set(-300, 65, -520)
     skillsCloudText.rotation.y = Math.PI / 6
 
-    // gui.add(skillsCloudText.position, 'x').min(-1000).max(2000).step(1)
-    // gui.add(skillsCloudText.position, 'y').min(-1000).max(2000).step(1)
-    // gui.add(skillsCloudText.position, 'z').min(-1000).max(2000).step(1)
+    gui.add(skillsCloudText.position, 'x').min(-1000).max(2000).step(1)
+    gui.add(skillsCloudText.position, 'y').min(-1000).max(2000).step(1)
+    gui.add(skillsCloudText.position, 'z').min(-1000).max(2000).step(1)
 
     cssScene.add(skillsCloudText)
 }
 
 const addProjectsIntroText = () => {
     const content = document.createElement('div')
-    content.className = 'content-card'
+    content.className = 'content-card wide'
 
     const text = document.createElement('p')
     text.className = 'content-card__text'
-    text.innerText = "Here are some recent projects that I've worked on."
+    text.innerText = "Here are some fun projects (that I'm allowed to mention) that I've worked on over the years."
     content.appendChild(text)
 
     projectsIntroText = new CSS3DObject(content);
-    projectsIntroText.position.set(10, 180, -1250)
+    projectsIntroText.position.set(10, 150, -1250)
     
     cssScene.add(projectsIntroText)
 }
@@ -679,14 +647,14 @@ const addProjectsText = () => {
 // Dev samples
 const addProject0 = () => {
     project0Group = new THREE.Group()
-    const project0models = ['./models/devsamples-screen.glb', './models/devsamples-laptop.glb', './models/devsamples-iphone.glb']
+    const project0models = ['./models/devsamples-screen.glb', './models/devsamples-macbook.glb', './models/devsamples-iphone.glb']
     addProject(scene, project0Group, project0models, -270)
 }
 
 // ARC
 const addProject1 = () => {
     project1Group = new THREE.Group()
-    const project1models = ['./models/arc-screen.glb', './models/arc-laptop.glb', './models/arc-iphone.glb']
+    const project1models = ['./models/arc-screen.glb', './models/arc-macbook.glb', './models/arc-iphone.glb']
     addProject(scene, project1Group, project1models, -390)
 }
 
@@ -700,7 +668,7 @@ const addProject2 = () => {
 // Father Peyton
 const addProject3 = () => {
     project3Group = new THREE.Group()
-    const project3models = ['./models/fp-screen.glb', './models/fp-laptop.glb', './models/fp-iphone.glb']
+    const project3models = ['./models/fp-screen.glb', './models/fp-macbook.glb', './models/fp-iphone.glb']
     addProject(scene, project3Group, project3models, -630)
 }
 
@@ -714,14 +682,14 @@ const addProject4 = () => {
 // Covid Tracker
 const addProject5 = () => {
     project5Group = new THREE.Group()
-    const project5models = ['./models/covid-screen.glb', './models/covid-laptop.glb', './models/covid-screen2.glb']
+    const project5models = ['./models/covid-screen.glb', './models/covid-macbook.glb', './models/covid-screen2.glb']
     addProject(scene, project5Group, project5models, -870)
 }
 
 // World Tweets
 const addProject6 = () => {
     project6Group = new THREE.Group()
-    const project6models = ['./models/tweets-screen.glb', './models/tweets-laptop.glb', './models/tweets-screen2.glb']
+    const project6models = ['./models/tweets-screen.glb', './models/tweets-macbook.glb', './models/tweets-screen2.glb']
     addProject(scene, project6Group, project6models, -990)
 }
 
@@ -772,7 +740,7 @@ const tick = () => {
         sceneModel.material.dispose()
         sceneModel = null
         // Update the pass effect so it's not as noticeable 
-        afterimagePass.uniforms[ 'damp' ].value = 0.1
+        // afterimagePass.uniforms[ 'damp' ].value = 0.1
     }
 
     // Reset the model animation once we're almost back to the starting point
@@ -780,7 +748,7 @@ const tick = () => {
         sceneModel = model
         introSectionGroup.add(sceneModel)
         // Turn the pass effect back up
-        afterimagePass.uniforms[ 'damp' ].value = 0.5
+        // afterimagePass.uniforms[ 'damp' ].value = 0.5
     }
 
     // About content
@@ -996,6 +964,8 @@ const tick = () => {
     // Render
     renderer.render(scene, camera)
     // effectComposer.render()
+    // postProcessing.render();
+    // composer.render()
     cssRenderer.render(cssScene, camera);
 
     lastTime = now
@@ -1010,15 +980,19 @@ const init = () => {
     // Path for camera to follow
     addCurvePath()
     initCamera()
+    initLights()
     initRenderer()
     addResizeListener()
     addMouseListener()
+    addResetListener()
+    // addPostProcessing()
     // Add the intro section content
     // addAboutContent()
     // Sections
     addSurfacePlane()
-    addIntroSection()
-    // addIntroContent()
+    // addIntroSection()
+    addIntroContent()
+    addAboutGraph()
     addAboutText()
     addSkillsText()
     addSkillsCloud()

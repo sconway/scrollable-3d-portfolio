@@ -80,7 +80,7 @@ export function updatePosition(curvePath, object, positionAlongPathState) {
 			const newLookAt = curvePath.getPointAt(lookAtPosition);
 
 			// look slightly above the curve path
-			newLookAt.y += 0.0001	
+			newLookAt.y += 0.001
 
 			object.position.copy(newPosition);
 			object.lookAt(newLookAt);
