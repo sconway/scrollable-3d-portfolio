@@ -1,7 +1,6 @@
 import "./scss/index.scss"
 import * as THREE from 'three'
 // import { pass, mrt, output, bloom, emissive } from 'three/tsl';
-import GUI from 'lil-gui'
 import gsap from "gsap"
 import Stats from "stats.js"
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -61,11 +60,9 @@ const stats = new Stats()
 stats.showPanel(0)
 document.body.appendChild(stats.dom)
  
-const gui = new GUI({
-    width: 300
-})
 const canvas = document.getElementById('canvas')
 const cssCanvas = document.getElementById('cssCanvas')
+const scrollIndicator = document.getElementById('scrollIndicator')
 const scene = new THREE.Scene()
 const cssScene = new THREE.Scene()
 const clock = new THREE.Clock()
@@ -160,7 +157,7 @@ const addIntroText = () => {
                 {
                     font: font,
                     size: 5,
-                    depth: 2,
+                    height: 2,
                     curveSegents: 6,
                     bevelEnabled: true,
                     bevelThickness: 0.03,
@@ -174,7 +171,7 @@ const addIntroText = () => {
                 {
                     font: font,
                     size: 3.5,
-                    depth: 2,
+                    height: 2,
                     curveSegents: 6,
                     bevelEnabled: true,
                     bevelThickness: 0.03,
@@ -222,10 +219,6 @@ const addIntroContent = async () => {
     sceneModel.position.y += 7
     sceneModel.rotation.y += Math.PI / 7
     introSectionGroup.add(sceneModel)
-
-    // gui.add(sceneModel.position, 'x').min(-10).max(10).step(1)
-    // gui.add(sceneModel.position, 'y').min(-10).max(10).step(1)
-    // gui.add(sceneModel.position, 'z').min(-10).max(10).step(1)
     
     // Animate the model to full size
     gsap.to(sceneModel.material.uniforms.uScale, {
@@ -261,6 +254,18 @@ const addResizeListener = () => {
         // Update composer
         // effectComposer.setSize(sizes.width, sizes.height)
         // effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    })
+}
+
+const add2DButtonListener = () => {
+    const switchButton = document.getElementById("switch")
+    
+    switchButton.addEventListener("click", () => {
+        switchButton.classList.add("active")
+
+        setTimeout(() => {
+            window.location.href = "https://www.sconway.me"
+        }, 350)
     })
 }
 
@@ -449,10 +454,6 @@ const addAboutGraph = async () => {
     skillsGraph.children.forEach(mesh => mesh.visible = false)
     // skillsGraph.children.forEach(mesh => effect.selection.add(mesh))
 
-    // gui.add(skillsGraph.position, 'x').min(-200).max(200).step(1)
-    // gui.add(skillsGraph.position, 'y').min(-200).max(200).step(1)
-    // gui.add(skillsGraph.position, 'z').min(-200).max(200).step(1)
-
     scene.add(skillsGraph)
 }
 
@@ -607,10 +608,6 @@ const addSkillsCloudText = () => {
     skillsCloudText.position.set(-300, 65, -520)
     skillsCloudText.rotation.y = Math.PI / 6
 
-    gui.add(skillsCloudText.position, 'x').min(-1000).max(2000).step(1)
-    gui.add(skillsCloudText.position, 'y').min(-1000).max(2000).step(1)
-    gui.add(skillsCloudText.position, 'z').min(-1000).max(2000).step(1)
-
     cssScene.add(skillsCloudText)
 }
 
@@ -732,6 +729,8 @@ const tick = () => {
 
     // Update the camera position on our curve path as the user scrolls
     const percentageComplete = updatePosition(curvePath, camera, positionAlongPathState)
+
+    scrollIndicator.style.height = percentageComplete * 100 + "%";
 
     // Once we pass the intro section, remove the model to improve performance
     if (percentageComplete >= ABOUT_THRESHOLD && sceneModel) {
@@ -984,6 +983,7 @@ const init = () => {
     initRenderer()
     addResizeListener()
     addMouseListener()
+    add2DButtonListener()
     addResetListener()
     // addPostProcessing()
     // Add the intro section content

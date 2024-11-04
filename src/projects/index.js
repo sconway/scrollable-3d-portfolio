@@ -3,9 +3,9 @@ import gsap from "gsap"
 import { CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { loadModel } from "../model"
 
-const gui = new GUI({
-    width: 300
-})
+// const gui = new GUI({
+//     width: 300
+// })
 
 const animateToPosition = (group, x, y, z) => {
     gsap.to(group.position, {
