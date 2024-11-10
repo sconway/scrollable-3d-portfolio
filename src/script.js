@@ -204,6 +204,21 @@ const addIntroContent = async () => {
     })
 }
 
+const handlePageLoad = () => {
+    const loadingScreen = document.getElementById("loadingScreen");
+    loadingScreen.classList.add("active");
+}
+
+/**
+ * =======================================================================
+ * EVENT LISTENERS
+ * =======================================================================
+ */
+
+const addPageLoadListener = () => {
+    window.addEventListener("load", handlePageLoad, false);
+}
+
 /**
  * Handle updating the camera, renderer, and other variables when the screen size changes
  */
@@ -413,9 +428,10 @@ const animateAboutGraph = (show) => {
         duration: 0.7,
         ease: 'expo.inOut',
     })
+
     gsap.to(skillsGraphGroup.position, {
         x: show ? -33 : -100,
-        duration: 0.7,
+        duration: show ? 0.7 : 0.3,
         ease: 'expo.inOut',
     })
 }
@@ -901,6 +917,7 @@ const init = () => {
     initCamera()
     initLights()
     initRenderer()
+    addPageLoadListener()
     addResizeListener()
     addMouseListener()
     add2DButtonListener()
