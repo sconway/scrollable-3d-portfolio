@@ -28,7 +28,6 @@ export const loadMeshModel = (filePath) => {
         loader.load(
             filePath,
             (obj) => {
-                console.log('obj: ', obj)
                 resolve(group)
             }
         )

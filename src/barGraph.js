@@ -107,8 +107,8 @@ const createTextMesh = (font, value) => {
     )
     const textMaterial = new THREE.MeshBasicMaterial({
         color: new THREE.Color(0xffffff),
-        transparent: true,
-        opacity: 0,
+        // transparent: true,
+        // opacity: 0,
         wireframe: true,
         side: THREE.DoubleSide,
     })

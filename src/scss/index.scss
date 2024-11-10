@@ -18,40 +18,18 @@ $xlarge: 1200px;
         border-radius: 0%;
         transform: translateX(0px) rotate(0deg) scale(1);
     }
-    // 10% {
-    //     transform: translateX(4px);
-    // }
-    // 20% {
-    //     transform: translateX(8px);
-    // }
     30% {
         border-radius: 40%;
         transform: translateX(12px) rotate(150deg) scale(0.3);
     }
-    // 40% {
-    //     border-radius: 48%;
-    //     transform: translateX(14px);
-    //     transform: rotate(170);
-    // }
     50% {
         border-radius: 50%;
         transform: translateX(15px) rotate(180deg) scale(0.2);
     }
-    // 60% {
-    //     border-radius: 48%;
-    //     transform: translateX(16px);
-    //     transform: rotate(190);
-    // }
     70% {
         border-radius: 40%;
         transform: translateX(18px) rotate(210deg) scale(0.3);
     }
-    // 80% {
-    //     transform: translateX(24px);
-    // }
-    // 90% {
-    //     transform: translateX(26px);
-    // }
     100%{
         border-radius: 0;
         transform: translateX(30px) rotate(360deg) scale(1);
@@ -68,6 +46,7 @@ html,
 body
 {
     height: 100%;
+    font-family: "Bebas Neue", serif;
 
     * {
         user-select: none;
@@ -80,7 +59,7 @@ body
     top: 0;
     left: 0;
     outline: none;
-    font-family: Helvetica, sans-serif;
+    font-family: "Bebas Neue", serif;
 }
 
 .css-canvas {
@@ -92,7 +71,7 @@ body
     border: 2px solid $secondary;
     color: $secondary;
     cursor: pointer;
-    font-family: Helvetica, sans-serif;
+    font-family: "Bebas Neue", serif;
     letter-spacing: 2px;
     padding: 12px 24px;
     position: absolute;
@@ -122,7 +101,7 @@ body
     cursor: pointer;
     position: absolute;
     right: 40px;
-    top: 20px;
+    top: 21px;
     height: 30px;
     width: 60px;
 
@@ -133,6 +112,7 @@ body
         }
 
         .switch-text {
+            font-family: "Bebas Neue", serif;
             opacity: 0.5;
             
             &:last-of-type {
@@ -154,16 +134,16 @@ body
     .switch-text {
         color: $secondary;
         letter-spacing: 1px;
-        font-family: Helvetica, sans-serif;
+        font-family: "Bebas Neue", serif;
         position: absolute;
-        left: -33px;
+        left: -26px;
         top: 6px;
         transition: opacity 300ms ease;
 
         &:last-of-type {
             opacity: 0.5;
             left: initial;
-            right: -33px;
+            right: -26px;
         }
     }
 }
@@ -174,7 +154,6 @@ body
     align-items: center;
     height: 100vh;
     position: relative;
-    font-family: 'Cabin', sans-serif;
     color: #ffeded;
     text-transform: uppercase;
     font-size: 7vmin;
@@ -188,6 +167,7 @@ body
 .content-card {
     border: 1px solid $highlight;
     box-shadow: 0 0 6px rgba(0, 249, 170, 0.75);
+    font-family: "Rajdhani", sans-serif;
     position: absolute;
     width: 250px;
     opacity: 0;
@@ -207,7 +187,7 @@ body
 .content-card__text {
     color: $highlight;
     font-size: 22px;
-    font-family: Helvetica, sans-serif;
+    font-family: "Rajdhani", sans-serif;
 }
 
 /*
@@ -217,7 +197,7 @@ body
     border: 1px solid rgb(0, 249, 170);
     background-color: rgba(0, 249, 170, 0.15);
     box-shadow: 0 0 3px rgba(0, 249, 170, 0.75);
-    font-family: Helvetica, sans-serif;
+    font-family: "Rajdhani", sans-serif;
     min-width: 120px;
     opacity: 0;
     padding: 16px;
@@ -251,10 +231,10 @@ body
 .project-details {
     border: 1px solid $highlight;
     color: $secondary;
+    font-family: "Bebas Neue", serif;
     position: fixed;
     padding: 24px;
-    height: 600px;
-    width: 450px;
+    width: 520px;
     pointer-events: none;
     opacity: 0;
     transition: opacity 500ms ease;
@@ -270,8 +250,10 @@ body
     }
 
     &__description {
-        font-size: 18px;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 20px;
         margin-bottom: 16px;
+        letter-spacing: 0.5px;
     }
 
     &__header {
@@ -283,9 +265,9 @@ body
 
     &__footer {
         display: flex;
-        flex-wrap: wrap;
         justify-content: space-between;
         margin-bottom: 15px;
+        padding-top: 32px;
     }
 
     &__wrapper {
@@ -294,6 +276,7 @@ body
 
     &__role,
     &__technologies {
+        font-family: "Rajdhani", sans-serif;
         font-size: 1.2rem;
     }
 
@@ -366,12 +349,11 @@ body
 // Contact section
 .contact-section {
     color: $secondary;
-    font-family: Helvetica, sans-serif;
+    font-family: "Bebas Neue", serif;
     position: fixed;
     padding: 24px;
     min-width: 1800px;
     opacity: 0;
-    // overflow: hidden;
     pointer-events: none;
     transition: opacity 500ms ease;
     z-index: 3;
@@ -427,21 +409,12 @@ body
                 cursor: pointer;
             }
         }
-
-        &.github {
-        }
-
-        &.linkedin {
-            // margin-right: 56px;
-        }
-
-        &.email {
-
-        }
     }
 
     .contact-section__text {
+        font-family: "Rajdhani", sans-serif;
         font-size: 86px;
+        letter-spacing: 2px;
         text-align: center;
     }
 }

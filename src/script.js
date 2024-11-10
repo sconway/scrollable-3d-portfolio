@@ -1,31 +1,14 @@
 import "./scss/index.scss"
 import * as THREE from 'three'
-// import { pass, mrt, output, bloom, emissive } from 'three/tsl';
 import gsap from "gsap"
 import Stats from "stats.js"
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { BlendFunction, BloomEffect, EdgeDetectionMode, EffectComposer, EffectPass, PredicationMode, RenderPass, SMAAEffect, SMAAPreset, SelectiveBloomEffect } from "postprocessing";
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
-// import { pass, mrt, output, bloom, emissive } from 'three/tsl';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { TTFLoader } from 'three/examples/jsm/loaders/TTFLoader.js'
 import { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
-// import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-// import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
-import { SobelOperatorShader } from 'three/addons/shaders/SobelOperatorShader.js';
-import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js'
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
-import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
-import { AfterimagePass } from 'three/addons/postprocessing/AfterimagePass.js';
-import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { PositionAlongPathState } from "./PositionAlongPathState"
 import { handleScroll, updatePosition } from './PositionAlongPathMethods'
-import { loadModel, loadParticlesModel, loadParticlesModel2 } from "./model.js"
+import { loadModel, loadParticlesModel } from "./model.js"
 import { createBarGraph } from './barGraph'
 import { skills } from './constants/skills.js'
 import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
@@ -73,6 +56,7 @@ let positionAlongPathState = new PositionAlongPathState()
 // Mouse position
 const mouse = new THREE.Vector2()
 // Skills
+const skillsGraphGroup = new THREE.Group()
 const skillsGroup = new THREE.Group()
 const skillsObjects = []
 // Project groups
@@ -94,24 +78,16 @@ const fontLoader = new TTFLoader()
 const matCapTexture = textureLoader.load('./textures/matcap8.png')
 matCapTexture.colorSpace = THREE.SRGBColorSpace
 
-// Axes helper
-// const axesHelper = new THREE.AxesHelper( 5 );
-// scene.add( axesHelper );
-
 let camera = null
 let renderer = null
 let cssRenderer = null
-let controls = null
 let lastTime = performance.now()
 let initialScrollValuesSet = false
-let effectComposer = null
 let curvePath = null
 let scrollY = 0
 let surfacePlaneMaterial = null
 let model = null
 let sceneModel = null
-let afterimagePass = null
-let outlinePass = null
 let aboutContent = null
 let aboutContentActive = false
 let skillsText = null
@@ -137,9 +113,6 @@ let project4Text = null
 let project5Text = null
 let project6Text = null
 let contactSection = null
-let composer = null
-let effect = null
-let smaaEffect = null
 
 
 /**
@@ -250,10 +223,6 @@ const addResizeListener = () => {
 
         // Update CSS renderer
         cssRenderer.setSize(sizes.width, sizes.height)
-
-        // Update composer
-        // effectComposer.setSize(sizes.width, sizes.height)
-        // effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     })
 }
 
@@ -306,10 +275,6 @@ const initCamera = () => {
     camera.position.copy(curvePath.getPointAt(0))
     camera.lookAt(curvePath.getPointAt(0.01))
 
-    // Controls
-    // controls = new OrbitControls(camera, canvas)
-    // controls.enableZoom = false
-
     scene.add(camera)
 }
 
@@ -339,9 +304,7 @@ const initRenderer = () => {
     renderer = new THREE.WebGLRenderer({
         canvas: canvas,
         antialias: true,
-        powerPreference: "high-performance",
         stencil: false,
-        // depth: false
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -354,24 +317,6 @@ const initRenderer = () => {
     cssRenderer.domElement.style.top = 0
 	cssCanvas.appendChild(cssRenderer.domElement)
     cssScene.scale.set(0.1, 0.1, 0.1)
-}
-
-const addPostProcessing = () => {
-    composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-
-    smaaEffect = new SMAAEffect(BlendFunction.ADD, SMAAPreset.LOW, EdgeDetectionMode.COLOR, PredicationMode.DISABLED);
-
-    effect = new SelectiveBloomEffect(scene, camera, {
-        blendFunction: BlendFunction.ADD,
-        mipmapBlur: true,
-        luminanceThreshold: 0.4,
-        luminanceSmoothing: 0.2,
-        intensity: 1.0
-    });
-
-    const effectPass = new EffectPass(camera, smaaEffect, effect);
-    composer.addPass(effectPass);
 }
 
 const addSurfacePlane = () => {
@@ -447,31 +392,32 @@ const resetCurvePath = () => {
  */
 const addAboutGraph = async () => {
     skillsGraph = await loadModel("./models/bars.glb");
-    skillsGraph.position.set(-33, -3, -13)
     skillsGraph.rotation.z -= Math.PI / 14
     skillsGraph.rotation.y -= Math.PI / 3.4
 
-    skillsGraph.children.forEach(mesh => mesh.visible = false)
-    // skillsGraph.children.forEach(mesh => effect.selection.add(mesh))
+    skillsGraphGroup.add(skillsGraph)
+    skillsGraphGroup.position.set(-33, -3, -13)
+    skillsGraphGroup.scale.set(0, 0, 0)
 
-    scene.add(skillsGraph)
+    scene.add(skillsGraphGroup)
 }
 
 /**
  * Animate about graph to be visible
  */
 const animateAboutGraph = (show) => {
-    for (let i = 0; i < skillsGraph.children.length; i++) {
-        const object = skillsGraph.children[i]
-
-        object.visible = show
-
-        gsap.to(object.material, {
-            opacity: show ? 1 : 0,
-            duration: Math.random() * 1 + 1,
-            ease: 'expo.inOut',
-        })
-    }
+    gsap.to(skillsGraphGroup.scale, {
+        x: show ? 1 : 0,
+        y: show ? 1 : 0,
+        z: show ? 1 : 0,
+        duration: 0.7,
+        ease: 'expo.inOut',
+    })
+    gsap.to(skillsGraphGroup.position, {
+        x: show ? -33 : -100,
+        duration: 0.7,
+        ease: 'expo.inOut',
+    })
 }
 
 const addSkillsCloud = () => {
@@ -514,24 +460,6 @@ const addSkillsCloud = () => {
 
         skillsObjects.push( object );
     }
-
-    // for ( let i = 0, l = skillsGroup.children.length; i < l; i ++ ) {
-
-    //     const phi = Math.acos( - 1 + ( 3 * i ) / l );
-    //     const theta = Math.sqrt( l * Math.PI ) * phi;
-
-    //     const object = new THREE.Object3D();
-
-    //     object.position.setFromSphericalCoords( 300, phi, theta );
-
-    //     vector.copy( object.position ).multiplyScalar( 2 );
-
-    //     object.lookAt( vector );
-
-    //     skillsObjects.push( object );
-
-    // }
-    
 }
 
 /**
@@ -709,7 +637,6 @@ const tick = () => {
     stats.begin()
 
     const elapsedTime = clock.getElapsedTime()
-    // controls.update()
     
     // Calculate frames per second of the screen
     const now = performance.now();
@@ -738,16 +665,12 @@ const tick = () => {
         sceneModel.geometry.dispose()
         sceneModel.material.dispose()
         sceneModel = null
-        // Update the pass effect so it's not as noticeable 
-        // afterimagePass.uniforms[ 'damp' ].value = 0.1
     }
 
     // Reset the model animation once we're almost back to the starting point
     if (percentageComplete < ABOUT_THRESHOLD && !sceneModel && model) {
         sceneModel = model
         introSectionGroup.add(sceneModel)
-        // Turn the pass effect back up
-        // afterimagePass.uniforms[ 'damp' ].value = 0.5
     }
 
     // About content
@@ -962,9 +885,6 @@ const tick = () => {
 
     // Render
     renderer.render(scene, camera)
-    // effectComposer.render()
-    // postProcessing.render();
-    // composer.render()
     cssRenderer.render(cssScene, camera);
 
     lastTime = now
@@ -985,12 +905,8 @@ const init = () => {
     addMouseListener()
     add2DButtonListener()
     addResetListener()
-    // addPostProcessing()
-    // Add the intro section content
-    // addAboutContent()
     // Sections
     addSurfacePlane()
-    // addIntroSection()
     addIntroContent()
     addAboutGraph()
     addAboutText()
@@ -999,7 +915,6 @@ const init = () => {
     addSkillsCloudText()
     addProjectsIntroText()
     addProjectsText()
-    // addAboutSection()
     addContactSection()
     // Start the animation loop
     tick()
