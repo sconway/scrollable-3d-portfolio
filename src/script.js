@@ -9,7 +9,6 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { PositionAlongPathState } from "./PositionAlongPathState"
 import { handleScroll, updatePosition } from './PositionAlongPathMethods'
 import { loadModel, loadParticlesModel } from "./model.js"
-import { createBarGraph } from './barGraph'
 import { skills } from './constants/skills.js'
 import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
     SCENE_SIZE,
@@ -39,9 +38,9 @@ import { addMobileProject, addProject, addProjectText } from "./projects/index.j
 /**
  * Stats
  */
-const stats = new Stats()
-stats.showPanel(0)
-document.body.appendChild(stats.dom)
+// const stats = new Stats()
+// stats.showPanel(0)
+// document.body.appendChild(stats.dom)
  
 const canvas = document.getElementById('canvas')
 const cssCanvas = document.getElementById('cssCanvas')
@@ -425,13 +424,13 @@ const animateAboutGraph = (show) => {
         x: show ? 1 : 0,
         y: show ? 1 : 0,
         z: show ? 1 : 0,
-        duration: 0.7,
+        duration: show ? 0.7 : 0.1,
         ease: 'expo.inOut',
     })
 
     gsap.to(skillsGraphGroup.position, {
         x: show ? -33 : -100,
-        duration: show ? 0.7 : 0.3,
+        duration: show ? 0.7 : 0.1,
         ease: 'expo.inOut',
     })
 }
@@ -650,7 +649,7 @@ const addContactSection = () => {
  * Animate
  */
 const tick = () => {
-    stats.begin()
+    // stats.begin()
 
     const elapsedTime = clock.getElapsedTime()
     
@@ -908,7 +907,7 @@ const tick = () => {
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 
-    stats.end()
+    // stats.end()
 }
 
 const init = () => {
