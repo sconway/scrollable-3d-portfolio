@@ -162,46 +162,41 @@
       </div>
     </div>
 
-    <!-- ARC project -->
+    <!-- Global Tweets -->
     <div class="project-details" id="project1">
-      <span class="project-details__year">2017</span>
-      <h2 class="project-details__title">Arc Advisory Group</h2>
+      <span class="project-details__year">2024</span>
+      <h2 class="project-details__title">Global Tweets</h2>
       <p class="project-details__description">
-        The website for Arc Advisory Group was rebuilt from the ground up for
-        this project. This rebuild involved consolidating all of the different
-        services that Arc offered into a smaller number of easy to navigate
-        pages. These pages were created with subtle yet fun interactions and
-        animations, while also being generic enough to be easily extended and
-        repurposed to include any type of content.
+        This project started as a React application that was fed a stream of
+        tweets from an Express server using web sockets. After Twitter was
+        purchased by an eccentric billionaire, the price of using the Twiter API
+        went up significantly, causing me to shift my approach.
       </p>
       <p class="project-details__description">
-        This client wanted a a very customizable CMS dashboard to allow them to
-        build their own pages with existing components/widgets. This made for
-        some interesting challenges, as we had to plan for and defend against a
-        myriad of possibilities. To future-proof the front-end of this site, I
-        set up a number of styles to enforce things like maximum heights/widths,
-        overflow rules, margins/paddings etc. with the goal of preventing any
-        content changes from breaking the layout of the site.
+        Instead of relying on the Twitter API, I used an LLM to generate some
+        example tweets which are randomly plotted on the globe. The color of the
+        plotted point corresponds to the sentiment of the tweet, and the tweet
+        details can be seen by hovering on the point. Countries can be clicked
+        to view additional information about the country.
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
           <h4 class="project-details__header">Technologies</h4>
           <p class="project-details__technologies">
-            HTML, CSS, Javascript, Drupal, PHP
+            NodeJS, ExpressJS, SocketIO, HTML, CSS, Javascript, ThreeJS
           </p>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
           <p class="project-details__role" id="projectRole">
-            Converting designs into front-end templates and integrating them in
-            the Drupal CMS.
+            Design and development of entire application.
           </p>
         </div>
       </footer>
 
       <div class="project-details__link-wrapper">
         <a
-          href="https://www.arcweb.com/"
+          href="https://sconway.github.io/global-tweets/build/"
           class="project-details__link"
           id="projectLink"
           target="_blank"
@@ -379,41 +374,46 @@
       </div>
     </div>
 
-    <!-- World Tweets -->
+    <!-- ARC project -->
     <div class="project-details" id="project6">
-      <span class="project-details__year">2016</span>
-      <h2 class="project-details__title">World Tweets</h2>
+      <span class="project-details__year">2017</span>
+      <h2 class="project-details__title">Arc Advisory Group</h2>
       <p class="project-details__description">
-        After learning about Twitter's API, I was looking for a project that
-        would be a good use case for it, and this seemed like the perfect
-        candidate. This project listens for any incoming tweets with geo data,
-        and plots them on a 3D globe for users to interact with.
+        The website for Arc Advisory Group was rebuilt from the ground up for
+        this project. This rebuild involved consolidating all of the different
+        services that Arc offered into a smaller number of easy to navigate
+        pages. These pages were created with subtle yet fun interactions and
+        animations, while also being generic enough to be easily extended and
+        repurposed to include any type of content.
       </p>
       <p class="project-details__description">
-        This web application uses an ExpressJS server to create a web socket
-        connection with the client and then listens to incoming tweets from the
-        Twitter API. These tweets are then piped to the client side application
-        and shown on an interactive globe. This application is hosted on the
-        free tier of Heroku, so it may take a minute for the server to boot up.
+        This client wanted a a very customizable CMS dashboard to allow them to
+        build their own pages with existing components/widgets. This made for
+        some interesting challenges, as we had to plan for and defend against a
+        myriad of possibilities. To future-proof the front-end of this site, I
+        set up a number of styles to enforce things like maximum heights/widths,
+        overflow rules, margins/paddings etc. with the goal of preventing any
+        content changes from breaking the layout of the site.
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
           <h4 class="project-details__header">Technologies</h4>
           <p class="project-details__technologies">
-            NodeJS, ExpressJS, SocketIO, HTML, CSS, Javascript, ThreeJS
+            HTML, CSS, Javascript, Drupal, PHP
           </p>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
           <p class="project-details__role" id="projectRole">
-            Design and development of entire application.
+            Converting designs into front-end templates and integrating them in
+            the Drupal CMS.
           </p>
         </div>
       </footer>
 
       <div class="project-details__link-wrapper">
         <a
-          href="http://world-tweets.herokuapp.com/"
+          href="https://www.arcweb.com/"
           class="project-details__link"
           id="projectLink"
           target="_blank"

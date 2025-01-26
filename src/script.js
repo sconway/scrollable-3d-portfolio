@@ -594,7 +594,7 @@ const addProject0 = () => {
 // ARC
 const addProject1 = () => {
     project1Group = new THREE.Group()
-    const project1models = ['./models/arc-screen.glb', './models/arc-macbook.glb', './models/arc-iphone.glb']
+    const project1models = ['./models/tweets-screen.glb', './models/tweets-macbook.glb', './models/tweets-screen2.glb']
     addProject(scene, project1Group, project1models, -390)
 }
 
@@ -629,7 +629,7 @@ const addProject5 = () => {
 // World Tweets
 const addProject6 = () => {
     project6Group = new THREE.Group()
-    const project6models = ['./models/tweets-screen.glb', './models/tweets-macbook.glb', './models/tweets-screen2.glb']
+    const project6models = ['./models/arc-screen.glb', './models/arc-macbook.glb', './models/arc-iphone.glb']
     addProject(scene, project6Group, project6models, -990)
 }
 
