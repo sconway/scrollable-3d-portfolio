@@ -9,6 +9,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { PositionAlongPathState } from "./PositionAlongPathState"
 import { handleScroll, updatePosition } from './PositionAlongPathMethods'
 import { loadModel, loadParticlesModel } from "./model.js"
+import { createBarGraph } from './barGraph.js'
 import { skills } from './constants/skills.js'
 import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
     SCENE_SIZE,
@@ -175,6 +176,8 @@ const addIntroText = () => {
             textGroup.add(text1)
             textGroup.add(text2)
             introSectionGroup.add(textGroup)
+
+            addAboutGraph(font)
         }
     )
 }
@@ -404,35 +407,69 @@ const resetCurvePath = () => {
  * SKILLS SECTION
  * =======================================================================
  */
-const addAboutGraph = async () => {
-    skillsGraph = await loadModel("./models/bars.glb");
-    skillsGraph.rotation.z -= Math.PI / 14
-    skillsGraph.rotation.y -= Math.PI / 3.4
+const addAboutGraph = async (font) => {
+    // skillsGraph = await loadModel("./models/bars.glb");
+    // skillsGraph.rotation.z -= Math.PI / 14
+    // skillsGraph.rotation.y -= Math.PI / 3.4
 
-    skillsGraphGroup.add(skillsGraph)
-    skillsGraphGroup.position.set(-33, -3, -13)
-    skillsGraphGroup.scale.set(0, 0, 0)
+    // skillsGraphGroup.add(skillsGraph)
+    // skillsGraphGroup.position.set(-33, -3, -13)
+    // skillsGraphGroup.scale.set(0, 0, 0)
 
-    scene.add(skillsGraphGroup)
+    // scene.add(skillsGraphGroup)
+    skillsGraph = createBarGraph(font);
+
+    skillsGraph.position.set(-10, 14, -10)
+    skillsGraph.rotation.set(Math.PI, Math.PI * 1.7, Math.PI / 2)
+    // gui.add(skillsGraph.position, 'x').min(-200).max(200).step(1)
+    // gui.add(skillsGraph.position, 'y').min(-200).max(200).step(1)
+    // gui.add(skillsGraph.position, 'z').min(-200).max(200).step(1)
+    scene.add(skillsGraph)
 }
 
 /**
  * Animate about graph to be visible
  */
 const animateAboutGraph = (show) => {
-    gsap.to(skillsGraphGroup.scale, {
-        x: show ? 1 : 0,
-        y: show ? 1 : 0,
-        z: show ? 1 : 0,
-        duration: show ? 0.7 : 0.1,
-        ease: 'expo.inOut',
-    })
-
-    gsap.to(skillsGraphGroup.position, {
-        x: show ? -33 : -100,
-        duration: show ? 0.7 : 0.1,
-        ease: 'expo.inOut',
-    })
+    for (let i = 0; i < skillsGraph.children.length; i++) {
+        const barGroup = skillsGraph.children[i];
+        
+        // Random delay for staggered animation
+        const delay = Math.random() * 0.5;
+        
+        if (barGroup instanceof THREE.Group) {
+            // Animate the main wireframe
+            const mainWireframe = barGroup.children[barGroup.children.length - 1];
+            gsap.to(mainWireframe.material, {
+                opacity: show ? 1 : 0,
+                duration: 0.8,
+                delay: delay,
+                ease: 'power2.inOut'
+            });
+            
+            // Animate each glow layer
+            for (let j = 0; j < barGroup.children.length - 1; j++) {
+                const glowMesh = barGroup.children[j];
+                const targetOpacity = show ? 
+                    0.15 * (1 - j / (barGroup.children.length - 1)) : 0;
+                
+                gsap.to(glowMesh.material, {
+                    opacity: targetOpacity,
+                    duration: 1,
+                    delay: delay,
+                    ease: 'power2.inOut'
+                });
+            }
+        } else if (barGroup instanceof THREE.Mesh) {
+            // Animate the text
+            gsap.to(barGroup.material, {
+                opacity: show ? 1 : 0,
+                duration: 0.8,
+                delay: delay + 0.2,
+                ease: 'power2.inOut'
+            });
+        }
+    }
 }
 
 const addSkillsCloud = () => {
@@ -924,7 +961,7 @@ const init = () => {
     // Sections
     addSurfacePlane()
     addIntroContent()
-    addAboutGraph()
+    // addAboutGraph()
     addAboutText()
     addSkillsText()
     addSkillsCloud()

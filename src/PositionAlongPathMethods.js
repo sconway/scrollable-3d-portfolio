@@ -1,5 +1,4 @@
 export function handleScroll(event, positionAlongPathState) {
-
 	positionAlongPathState.lastScrollTime = performance.now();
 
 	// When a new scroll starts, set the starting distance along the path to whatever the object's current distance is. 
@@ -11,24 +10,24 @@ export function handleScroll(event, positionAlongPathState) {
 }
 
 export function updatePosition(curvePath, object, positionAlongPathState) {
-
 	let timeElapsed = performance.now() - positionAlongPathState.lastScrollTime;
 
 	if (timeElapsed < positionAlongPathState.movementDuration) {
-
 		let interpolatedPositionOnPath;
 	
-		// The percentage complete towards the total time to animate, movementDuration.
+		// The percentage complete towards the total time to animate
 		const timeLeftPercentage = timeElapsed / positionAlongPathState.movementDuration;
 		
-		const minimumDegreeOfChange = 1.2;
-		const maximumDegreeOfChange = 4.0;
-		// const minimumDegreeOfChange = 0.001;
-		// const maximumDegreeOfChange = 0.9;
-		// console.log("PERCENTAGE: ", positionAlongPathState.currentPercentageOnPath )
-
+		// Smoothed interpolation values
+		const minimumDegreeOfChange = 0.3; // Reduced from 1.2 for smoother start
+		const maximumDegreeOfChange = 2.0; // Reduced from 4.0 for smoother acceleration
+		
+		// Apply easing function for smoother interpolation
 		let interpolationFactor = Math.max(timeLeftPercentage, minimumDegreeOfChange);
 		interpolationFactor = Math.min(interpolationFactor, maximumDegreeOfChange);
+		
+		// Add easing function for smoother movement
+		interpolationFactor = easeInOutCubic(interpolationFactor);
 
 		interpolatedPositionOnPath = (1 - interpolationFactor) * positionAlongPathState.startingDistance + interpolationFactor * positionAlongPathState.targetDistance;
 
@@ -89,6 +88,10 @@ export function updatePosition(curvePath, object, positionAlongPathState) {
 		}
 
 		return positionAlongPathState.currentPercentageOnPath
-
 	}
+}
+
+// Add easing function for smoother interpolation
+function easeInOutCubic(x) {
+	return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
