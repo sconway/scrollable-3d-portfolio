@@ -488,29 +488,72 @@ const addSkillsCloud = () => {
         skillsGroup.add(skill)
     }
     
-    skillsGroup.position.set(50, 30, -600)
-    skillsGroup.scale.set(0.15, 0.15, 0.15)
+    skillsGroup.position.set(0, 30, -650) // Moved back by 50px
+    skillsGroup.scale.set(0.195, 0.195, 0.195) // Increased by 30% (0.15 * 1.3)
     cssScene.add(skillsGroup)
 
     const vector = new THREE.Vector3()
+    const yAxis = new THREE.Vector3(0, 1, 0) // Y-axis for rotation
 
-    // Helix structure of the skill cards
-    for (let i = 0, l = skillsGroup.children.length; i < l; i++) {
-        const theta = i * 0.425 + Math.PI;
-        const y = - ( i * 34 ) + 450;
+    // Spread items across the screen in an evenly spaced grid pattern with concave curve
+    const totalSkills = skillsGroup.children.length
+    const cols = Math.ceil(Math.sqrt(totalSkills))
+    const rows = Math.ceil(totalSkills / cols)
+    const spacingX = 224 // Horizontal spacing (reduced by 30% from 320)
+    const spacingY = 175 // Vertical spacing (reduced by 30% from 250)
+    const startX = -(cols - 1) * spacingX / 2
+    const startY = (rows - 1) * spacingY / 2
+    const startZ = -200
+    const centerX = startX + (cols - 1) * spacingX / 2
+    const maxDistanceX = (cols - 1) * spacingX / 2
+    const curveDepth = 240 // How deep the concave curve goes (reduced by 20% from 300)
 
-        // const object = skillsGroup.children[i]0
-        const object = new THREE.Object3D()
+    for (let i = 0, l = totalSkills; i < l; i++) {
+        const col = i % cols
+        const row = Math.floor(i / cols)
+        
+        // Get the actual displayed CSS3DObject
+        const skillObject = skillsGroup.children[i]
+        
+        // Create target object for animation
+        const targetObject = new THREE.Object3D()
 
-        object.position.setFromCylindricalCoords( 400, theta, y );
+        const x = startX + col * spacingX
+        const y = startY - row * spacingY
+        
+        // Calculate distance from center for concave effect
+        const distanceFromCenter = (x - centerX) / maxDistanceX // Normalized -1 to 1
+        const distanceSquared = distanceFromCenter * distanceFromCenter
+        
+        // Apply concave curve: outer items move forward (toward camera)
+        const z = startZ + (distanceSquared * curveDepth)
 
-        vector.x = object.position.x * 1.2;
-        vector.y = object.position.y;
-        vector.z = object.position.z * 2;
+        targetObject.position.set(x, y, z)
 
-        object.lookAt( vector );
+        // Calculate Y-axis rotation for concave effect
+        // Outer items rotate more to face inward (center items = 0, edges = max rotation)
+        // Negate to flip direction: left items rotate right, right items rotate left
+        const rotationY = -distanceFromCenter * Math.PI / 7.5 // Max rotation of ~24 degrees (reduced by 20%)
+        
+        // Calculate direction to camera
+        vector.x = targetObject.position.x * 0.5
+        vector.y = targetObject.position.y
+        vector.z = targetObject.position.z + 1000
+        
+        // Calculate the angle to face the camera
+        const direction = new THREE.Vector3()
+        direction.subVectors(vector, targetObject.position).normalize()
+        
+        // Calculate rotation to face camera
+        const angleToCamera = Math.atan2(direction.x, direction.z)
+        
+        // Set rotation on target: face camera + Y-axis rotation for concave effect
+        targetObject.rotation.y = angleToCamera + rotationY
+        
+        // Also apply rotation directly to the actual displayed object
+        skillObject.rotation.y = angleToCamera + rotationY
 
-        skillsObjects.push( object );
+        skillsObjects.push( targetObject )
     }
 }
 
@@ -533,6 +576,13 @@ const animateSkillsText = (show = true) => {
             x: show ? target.position.x : 0, 
             y: show ? target.position.y : 0, 
             z: show ? target.position.z : 0,
+            duration: duration,
+            ease: 'expo.inOut',
+        })
+        
+        // Also animate rotation
+        gsap.to(object.rotation, {
+            y: show ? target.rotation.y : 0,
             duration: duration,
             ease: 'expo.inOut',
         })
