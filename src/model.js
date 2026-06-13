@@ -4,11 +4,27 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler'
 import vertex from './shaders/vertexShader.glsl'
 import fragment from './shaders/fragmentShader.glsl'
+import { COLOR4, COLOR5 } from './constants'
 
 const loader = new GLTFLoader()
 const dracoLoader = new DRACOLoader()
 dracoLoader.setDecoderPath('/draco/')
 loader.setDRACOLoader(dracoLoader)
+
+// Shared neon material for the glowing edge lines on device models.
+// Color is pushed past 1.0 so the bloom pass picks the lines up.
+const edgeLineMaterial = new THREE.LineBasicMaterial({
+    color: new THREE.Color(COLOR4).multiplyScalar(2.4),
+    transparent: true,
+    opacity: 0.85,
+})
+
+// Dark glossy body shared by all device frames
+const deviceBodyMaterial = new THREE.MeshStandardMaterial({
+    color: 0x0c1117,
+    metalness: 0.85,
+    roughness: 0.3,
+})
 
 export const loadModel = (filePath) => {
     return new Promise((resolve, reject) => {
@@ -23,14 +39,49 @@ export const loadModel = (filePath) => {
     })
 }
 
-export const loadMeshModel = (filePath) => {
-    return new Promise((resolve, reject) => {
-        loader.load(
-            filePath,
-            (obj) => {
-                resolve(group)
+/**
+ * Restyle a loaded device model (phone/laptop/monitor) for the neon look:
+ * - textured screens become emissive/backlit so bright pixels bloom softly
+ * - body panels become dark glossy metal
+ * - feature edges get traced with glowing neon lines
+ */
+export const applyDeviceStyle = (group) => {
+    group.traverse((child) => {
+        if (!child.isMesh) return
+
+        const materials = Array.isArray(child.material) ? child.material : [child.material]
+        const styled = materials.map((material) => {
+            if (material.map) {
+                // Screen: render unlit, just barely over-bright so the
+                // brightest pixels read as backlit without hazing the content
+                const screenMaterial = new THREE.MeshBasicMaterial({ map: material.map })
+                screenMaterial.color.setScalar(1.05)
+                return screenMaterial
             }
-        )
+            return deviceBodyMaterial
+        })
+        child.material = Array.isArray(child.material) ? styled : styled[0]
+
+        // Trace the feature edges of the mesh with neon lines
+        const edges = new THREE.EdgesGeometry(child.geometry, 25)
+        const line = new THREE.LineSegments(edges, edgeLineMaterial)
+        child.add(line)
+    })
+
+    return group
+}
+
+/**
+ * Dispose of a project group's geometries when it leaves the scene
+ * so the per-section loading doesn't leak GPU memory.
+ */
+export const disposeGroup = (group) => {
+    group.traverse((child) => {
+        if (child.geometry) child.geometry.dispose()
+        if (child.material && child.material.map && child.material !== edgeLineMaterial) {
+            child.material.map.dispose()
+            child.material.dispose()
+        }
     })
 }
 
@@ -45,21 +96,21 @@ export const loadParticlesModel = (filePath, color1, color2) => {
                 uniforms: {
                     uColor1: { value: new THREE.Color(color1) },
                     uColor2: { value: new THREE.Color(color2) },
+                    uColor3: { value: new THREE.Color(COLOR5) },
                     uTime: { value: 0 },
                     uScale: { value: 0 },
                     uCameraZ: { value: 0 }
                 },
                 vertexShader: vertex,
                 fragmentShader: fragment,
-                // transparent: true,
-                // depthTest: false,
-                // depthWrite: false,
+                transparent: true,
+                depthWrite: false,
                 blending: THREE.AdditiveBlending
             })
 
             // Particles geometry
             const sampler = new MeshSurfaceSampler(mesh).build()
-            const numParticles = 20000
+            const numParticles = 25000
             const particlesGeometry = new THREE.BufferGeometry()
             const particlesPosition = new Float32Array(numParticles * 3)
             const particlesRandomness = new Float32Array(numParticles * 3)
@@ -82,77 +133,13 @@ export const loadParticlesModel = (filePath, color1, color2) => {
             }
 
             particlesGeometry.setAttribute(
-                'position', 
+                'position',
                 new THREE.BufferAttribute(particlesPosition, 3)
             )
             particlesGeometry.setAttribute(
-                'aRandom', 
+                'aRandom',
                 new THREE.BufferAttribute(particlesRandomness, 3)
             )
-
-            // Particles
-            const particles = new THREE.Points(particlesGeometry, particlesMaterial)
-
-            resolve(particles)
-        })
-    })
-}
-
-export const loadParticlesModel2 = (filePath, color1, color2) => {
-    return new Promise((resolve, reject) => {
-        loader.load(filePath, (obj) => {
-            // Get the mesh from the loaded object
-            const mesh = obj.scene.children[0]
-
-            // Particles material
-            const particlesMaterial = new THREE.ShaderMaterial({
-                uniforms: {
-                    uColor1: { value: new THREE.Color(color1) },
-                    uColor2: { value: new THREE.Color(color2) },
-                    // uTime: { value: 0 },
-                    // uScale: { value: 0 },
-                    // uCameraZ: { value: 0 }
-                },
-                vertexShader: vertex,
-                fragmentShader: fragment,
-                // transparent: true,
-                // depthTest: false,
-                // depthWrite: false,
-                blending: THREE.AdditiveBlending
-            })
-
-            // Particles geometry
-            const sampler = new MeshSurfaceSampler(mesh).build()
-            const numParticles = 30000
-            const particlesGeometry = new THREE.BufferGeometry()
-            const particlesPosition = new Float32Array(numParticles * 3)
-            const particlesRandomness = new Float32Array(numParticles * 3)
-
-            for (let i = 0; i < numParticles; i++) {
-                const newPosition = new THREE.Vector3()
-                sampler.sample(newPosition)
-
-                particlesPosition.set([
-                    newPosition.x, // 0, 3, 6, 9 ...
-                    newPosition.y, // 1, 4, 7, 10 ...
-                    newPosition.z  // 2, 5, 8, 11 ...
-                ], i * 3)
-
-                particlesRandomness.set([
-                    Math.random() * 2 - 1, // -1 <> 1
-                    Math.random() * 2 - 1, // -1 <> 1
-                    Math.random() * 2 - 1 // -1 <> 1
-                ], i * 3)
-            }
-
-            particlesGeometry.setAttribute(
-                'position', 
-                new THREE.BufferAttribute(particlesPosition, 3)
-            )
-            // particlesGeometry.setAttribute(
-            //     'aRandom', 
-            //     new THREE.BufferAttribute(particlesRandomness, 3)
-            // )
 
             // Particles
             const particles = new THREE.Points(particlesGeometry, particlesMaterial)

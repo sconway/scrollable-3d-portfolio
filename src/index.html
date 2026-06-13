@@ -14,7 +14,7 @@
 
     <style>
       .loading-screen {
-        background-color: #121212;
+        background-color: #04070b;
         position: fixed;
         top: 0;
         left: 0;
@@ -47,7 +47,8 @@
         width: 20px;
         height: 20px;
         border-radius: 100%;
-        background-color: #3fcaa3;
+        background-color: #00f9aa;
+        box-shadow: 0 0 18px rgba(0, 249, 170, 0.8);
         margin: 35px 5px;
       }
 
@@ -119,8 +120,13 @@
 
     <!-- Dev samples project -->
     <div class="project-details" id="project0">
-      <span class="project-details__year">2019</span>
-      <h2 class="project-details__title">Dev Samples</h2>
+      <header class="project-details__head">
+        <span class="project-details__index">01</span>
+        <div class="project-details__heading">
+          <h2 class="project-details__title">Dev Samples</h2>
+          <span class="project-details__year">2019</span>
+        </div>
+      </header>
       <p class="project-details__description">
         Devsamples.com is a website that I created to help other developers,
         while gaining more experience with NextJS, Typescript, and the SanityIO
@@ -138,14 +144,20 @@
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
-          <h4 class="project-details__header">Technologies</h4>
-          <p class="project-details__technologies">
-            HTML, CSS, Typescript, NextJS, ExpressJS, SanityIO, ScrollMagic
-          </p>
+          <h4 class="project-details__header">Stack</h4>
+          <ul class="project-details__tags">
+            <li>HTML</li>
+            <li>CSS</li>
+            <li>Typescript</li>
+            <li>NextJS</li>
+            <li>ExpressJS</li>
+            <li>SanityIO</li>
+            <li>ScrollMagic</li>
+          </ul>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
-          <p class="project-details__role" id="projectRole">
+          <p class="project-details__role">
             Design and development of the entire site.
           </p>
         </div>
@@ -155,7 +167,6 @@
         <a
           href="https://www.devsamples.com/"
           class="project-details__link"
-          id="projectLink"
           target="_blank"
           >View Site</a
         >
@@ -164,8 +175,13 @@
 
     <!-- Global Tweets -->
     <div class="project-details" id="project1">
-      <span class="project-details__year">2024</span>
-      <h2 class="project-details__title">Global Tweets</h2>
+      <header class="project-details__head">
+        <span class="project-details__index">02</span>
+        <div class="project-details__heading">
+          <h2 class="project-details__title">Global Tweets</h2>
+          <span class="project-details__year">2024</span>
+        </div>
+      </header>
       <p class="project-details__description">
         This project started as a React application that was fed a stream of
         tweets from an Express server using web sockets. After Twitter was
@@ -181,14 +197,20 @@
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
-          <h4 class="project-details__header">Technologies</h4>
-          <p class="project-details__technologies">
-            NodeJS, ExpressJS, SocketIO, HTML, CSS, Javascript, ThreeJS
-          </p>
+          <h4 class="project-details__header">Stack</h4>
+          <ul class="project-details__tags">
+            <li>NodeJS</li>
+            <li>ExpressJS</li>
+            <li>SocketIO</li>
+            <li>HTML</li>
+            <li>CSS</li>
+            <li>Javascript</li>
+            <li>ThreeJS</li>
+          </ul>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
-          <p class="project-details__role" id="projectRole">
+          <p class="project-details__role">
             Design and development of entire application.
           </p>
         </div>
@@ -207,8 +229,13 @@
 
     <!-- TD project -->
     <div class="project-details" id="project2">
-      <span class="project-details__year">2020</span>
-      <h2 class="project-details__title">Tour Director/Traveler app</h2>
+      <header class="project-details__head">
+        <span class="project-details__index">03</span>
+        <div class="project-details__heading">
+          <h2 class="project-details__title">Tour Director/Traveler app</h2>
+          <span class="project-details__year">2020</span>
+        </div>
+      </header>
       <p class="project-details__description">
         EF Tour Director and EF Traveler are a pair of applications that I
         worked on with two other teammates as part of my previous job. These
@@ -222,14 +249,19 @@
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
-          <h4 class="project-details__header">Technologies</h4>
-          <p class="project-details__technologies">
-            React Native, iOS, Android, Typescript, AWS Appsync, AWS Amplify
-          </p>
+          <h4 class="project-details__header">Stack</h4>
+          <ul class="project-details__tags">
+            <li>React Native</li>
+            <li>iOS</li>
+            <li>Android</li>
+            <li>Typescript</li>
+            <li>AWS Appsync</li>
+            <li>AWS Amplify</li>
+          </ul>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
-          <p class="project-details__role" id="projectRole">
+          <p class="project-details__role">
             Development and deployment of application.
           </p>
         </div>
@@ -248,8 +280,13 @@
 
     <!-- Father Peyton project -->
     <div class="project-details" id="project3">
-      <span class="project-details__year">2015</span>
-      <h2 class="project-details__title">Father Peyton</h2>
+      <header class="project-details__head">
+        <span class="project-details__index">04</span>
+        <div class="project-details__heading">
+          <h2 class="project-details__title">Father Peyton</h2>
+          <span class="project-details__year">2015</span>
+        </div>
+      </header>
       <p class="project-details__description">
         This project was created to honor the late priest Father Patrick Peyton
         of Holy Cross Family Ministries. The website functions as a biography
@@ -263,14 +300,18 @@
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
-          <h4 class="project-details__header">Technologies</h4>
-          <p class="project-details__technologies">
-            HTML, CSS, Javascript, Drupal, PHP
-          </p>
+          <h4 class="project-details__header">Stack</h4>
+          <ul class="project-details__tags">
+            <li>HTML</li>
+            <li>CSS</li>
+            <li>Javascript</li>
+            <li>Drupal</li>
+            <li>PHP</li>
+          </ul>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
-          <p class="project-details__role" id="projectRole">
+          <p class="project-details__role">
             Converting designs into front-end templates and integrating them in
             the Drupal CMS.
           </p>
@@ -281,7 +322,6 @@
         <a
           href="https://www.fatherpeyton.org/"
           class="project-details__link"
-          id="projectLink"
           target="_blank"
           >View Site</a
         >
@@ -290,8 +330,13 @@
 
     <!-- Transit Tracker -->
     <div class="project-details" id="project4">
-      <span class="project-details__year">2019</span>
-      <h2 class="project-details__title">MBTA Transit Tracker</h2>
+      <header class="project-details__head">
+        <span class="project-details__index">05</span>
+        <div class="project-details__heading">
+          <h2 class="project-details__title">MBTA Transit Tracker</h2>
+          <span class="project-details__year">2019</span>
+        </div>
+      </header>
       <p class="project-details__description">
         The MBTA Tracker Tracker project was a cross-platform React Native
         application to help users gain better insight into the status and
@@ -308,14 +353,16 @@
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
-          <h4 class="project-details__header">Technologies</h4>
-          <p class="project-details__technologies">
-            React Native, iOS, Android
-          </p>
+          <h4 class="project-details__header">Stack</h4>
+          <ul class="project-details__tags">
+            <li>React Native</li>
+            <li>iOS</li>
+            <li>Android</li>
+          </ul>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
-          <p class="project-details__role" id="projectRole">
+          <p class="project-details__role">
             Design, development, and deployment of the entire application.
           </p>
         </div>
@@ -334,8 +381,13 @@
 
     <!-- Covid Tracker -->
     <div class="project-details" id="project5">
-      <span class="project-details__year">2020</span>
-      <h2 class="project-details__title">COVID19 Tracker and Visualizer</h2>
+      <header class="project-details__head">
+        <span class="project-details__index">06</span>
+        <div class="project-details__heading">
+          <h2 class="project-details__title">COVID19 Tracker and Visualizer</h2>
+          <span class="project-details__year">2020</span>
+        </div>
+      </header>
       <p class="project-details__description">
         The COVID19 tracker project was built to help me gain experience with
         the Svelte Javascript framework, as well as to provide a means for
@@ -350,14 +402,19 @@
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
-          <h4 class="project-details__header">Technologies</h4>
-          <p class="project-details__technologies">
-            HTML, CSS, Javascript, SvelteJS, ThreeJS, D3JS
-          </p>
+          <h4 class="project-details__header">Stack</h4>
+          <ul class="project-details__tags">
+            <li>HTML</li>
+            <li>CSS</li>
+            <li>Javascript</li>
+            <li>SvelteJS</li>
+            <li>ThreeJS</li>
+            <li>D3JS</li>
+          </ul>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
-          <p class="project-details__role" id="projectRole">
+          <p class="project-details__role">
             Development, deployment, and partial design.
           </p>
         </div>
@@ -376,8 +433,13 @@
 
     <!-- ARC project -->
     <div class="project-details" id="project6">
-      <span class="project-details__year">2017</span>
-      <h2 class="project-details__title">Arc Advisory Group</h2>
+      <header class="project-details__head">
+        <span class="project-details__index">07</span>
+        <div class="project-details__heading">
+          <h2 class="project-details__title">Arc Advisory Group</h2>
+          <span class="project-details__year">2017</span>
+        </div>
+      </header>
       <p class="project-details__description">
         The website for Arc Advisory Group was rebuilt from the ground up for
         this project. This rebuild involved consolidating all of the different
@@ -397,14 +459,18 @@
       </p>
       <footer class="project-details__footer">
         <div class="project-details__wrapper">
-          <h4 class="project-details__header">Technologies</h4>
-          <p class="project-details__technologies">
-            HTML, CSS, Javascript, Drupal, PHP
-          </p>
+          <h4 class="project-details__header">Stack</h4>
+          <ul class="project-details__tags">
+            <li>HTML</li>
+            <li>CSS</li>
+            <li>Javascript</li>
+            <li>Drupal</li>
+            <li>PHP</li>
+          </ul>
         </div>
         <div class="project-details__wrapper">
           <h4 class="project-details__header">My role</h4>
-          <p class="project-details__role" id="projectRole">
+          <p class="project-details__role">
             Converting designs into front-end templates and integrating them in
             the Drupal CMS.
           </p>
@@ -423,6 +489,7 @@
     </div>
 
     <section id="contactSection" class="contact-section">
+      <h2 class="contact-section__heading">Let's build something</h2>
       <div class="contact-section__icons">
         <a
           class="contact-section__icon github"

@@ -1,17 +1,20 @@
 import "./scss/index.scss"
 import * as THREE from 'three'
 import gsap from "gsap"
-import Stats from "stats.js"
+import { EffectComposer, RenderPass, EffectPass, BloomEffect, SMAAEffect } from 'postprocessing'
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { TTFLoader } from 'three/examples/jsm/loaders/TTFLoader.js'
 import { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { PositionAlongPathState } from "./PositionAlongPathState"
 import { handleScroll, updatePosition } from './PositionAlongPathMethods'
-import { loadModel, loadParticlesModel } from "./model.js"
+import { loadParticlesModel, disposeGroup } from "./model.js"
 import { createBarGraph } from './barGraph.js'
 import { skills } from './constants/skills.js'
-import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
+import gridVertexShader from './shaders/gridVertexShader.glsl'
+import gridFragmentShader from './shaders/gridFragmentShader.glsl'
+import { COLOR3, COLOR4, COLOR5, BACKGROUND_COLOR, SECTION_SIZE,
     SCENE_SIZE,
     PLANE_SIZE,
     CURVE_PATH_HEIGHT,
@@ -36,27 +39,18 @@ import { COLOR1, COLOR2, COLOR3, COLOR4, SECTION_SIZE,
 import { addMobileProject, addProject, addProjectText } from "./projects/index.js"
 
 
-/**
- * Stats
- */
-// const stats = new Stats()
-// stats.showPanel(0)
-// document.body.appendChild(stats.dom)
- 
 const canvas = document.getElementById('canvas')
 const cssCanvas = document.getElementById('cssCanvas')
 const scrollIndicator = document.getElementById('scrollIndicator')
 const scene = new THREE.Scene()
 const cssScene = new THREE.Scene()
 const clock = new THREE.Clock()
-const textureLoader = new THREE.TextureLoader()
 const introSectionGroup = new THREE.Group()
 // Path configuration
 let positionAlongPathState = new PositionAlongPathState()
 // Mouse position
 const mouse = new THREE.Vector2()
 // Skills
-const skillsGraphGroup = new THREE.Group()
 const skillsGroup = new THREE.Group()
 const skillsObjects = []
 // Project groups
@@ -74,12 +68,10 @@ const sizes = {
 }
 // Font loaders
 const fontLoader = new TTFLoader()
-// Textures
-const matCapTexture = textureLoader.load('./textures/matcap8.png')
-matCapTexture.colorSpace = THREE.SRGBColorSpace
 
 let camera = null
 let renderer = null
+let composer = null
 let cssRenderer = null
 let lastTime = performance.now()
 let initialScrollValuesSet = false
@@ -122,43 +114,35 @@ let contactSection = null
  */
 const addIntroText = () => {
     fontLoader.load(
-        './fonts/kode-bold.ttf', 
+        './fonts/kode-bold.ttf',
         (fontData) => {
             const font = new Font(fontData);
-            const textGeometry1 = new TextGeometry(
-                "HI",
-                {
-                    font: font,
-                    size: 5,
-                    height: 2,
-                    curveSegents: 6,
-                    bevelEnabled: true,
-                    bevelThickness: 0.03,
-                    bevelSize: 0.02,
-                    bevelOffset: 0,
-                    bevelSegments: 4,
-                }
-            )
-            const textGeometry2 = new TextGeometry(
-                "I'M SCOTT",
-                {
-                    font: font,
-                    size: 3.5,
-                    height: 2,
-                    curveSegents: 6,
-                    bevelEnabled: true,
-                    bevelThickness: 0.03,
-                    bevelSize: 0.02,
-                    bevelOffset: 0,
-                    bevelSegments: 4,
-                }
-            )
-            const textMaterial = new THREE.MeshLambertMaterial({
-                color: new THREE.Color(COLOR3),
-                side: THREE.DoubleSide
+            const textOptions = {
+                font: font,
+                height: 1.6,
+                curveSegments: 8,
+                bevelEnabled: true,
+                bevelThickness: 0.14,
+                bevelSize: 0.09,
+                bevelOffset: 0,
+                bevelSegments: 5,
+            }
+            const textGeometry1 = new TextGeometry("HI", { ...textOptions, size: 5 })
+            const textGeometry2 = new TextGeometry("I'M SCOTT", { ...textOptions, size: 3.5 })
+
+            // Two-material treatment: a softly glowing face (just past 1.0 so
+            // it blooms like a backlit sign) over dark metallic extruded sides
+            const faceMaterial = new THREE.MeshBasicMaterial({
+                color: new THREE.Color(1.05, 1.16, 1.1),
             })
-            const text1 = new THREE.Mesh(textGeometry1, textMaterial)
-            const text2 = new THREE.Mesh(textGeometry2, textMaterial)
+            const sideMaterial = new THREE.MeshStandardMaterial({
+                color: 0x12161d,
+                metalness: 0.9,
+                roughness: 0.32,
+            })
+            const textMaterials = [faceMaterial, sideMaterial]
+            const text1 = new THREE.Mesh(textGeometry1, textMaterials)
+            const text2 = new THREE.Mesh(textGeometry2, textMaterials)
             const textGroup = new THREE.Group()
 
             text1.rotation.y = Math.PI / 8
@@ -237,6 +221,7 @@ const addResizeListener = () => {
         // Update renderer
         renderer.setSize(sizes.width, sizes.height)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        composer.setSize(sizes.width, sizes.height)
 
         // Update CSS renderer
         cssRenderer.setSize(sizes.width, sizes.height)
@@ -296,35 +281,53 @@ const initCamera = () => {
 }
 
 /**
- * Add some lighting to the scene.
+ * Add some lighting to the scene. Most of the base illumination comes from
+ * the environment map; these lights add directional shape and highlights.
  */
 const initLights = () => {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.4)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
     scene.add(ambientLight)
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8)
-    directionalLight.castShadow = true
-    directionalLight.shadow.mapSize.set(1024, 1024)
-    directionalLight.shadow.camera.far = 15
-    directionalLight.shadow.camera.left = - 7
-    directionalLight.shadow.camera.top = 7
-    directionalLight.shadow.camera.right = 7
-    directionalLight.shadow.camera.bottom = - 7
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2)
     directionalLight.position.set(5, 5, 5)
     scene.add(directionalLight)
 }
 
 /**
- * Configure our renderer
+ * Configure our renderer and the post-processing pipeline. Bloom only picks
+ * up colors pushed past 1.0 (HDR), so neon lines/particles glow while
+ * regular content stays crisp.
  */
 const initRenderer = () => {
     renderer = new THREE.WebGLRenderer({
         canvas: canvas,
-        antialias: true,
+        powerPreference: 'high-performance',
+        antialias: false,
         stencil: false,
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    // Atmosphere
+    scene.background = new THREE.Color(BACKGROUND_COLOR)
+    scene.fog = new THREE.FogExp2(new THREE.Color(BACKGROUND_COLOR), 0.0085)
+
+    // Environment lighting so metallic surfaces have something to reflect
+    const pmremGenerator = new THREE.PMREMGenerator(renderer)
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture
+    scene.environmentIntensity = 0.65
+    pmremGenerator.dispose()
+
+    // Post-processing: HDR buffer -> bloom + SMAA
+    composer = new EffectComposer(renderer, { frameBufferType: THREE.HalfFloatType })
+    composer.addPass(new RenderPass(scene, camera))
+    const bloomEffect = new BloomEffect({
+        mipmapBlur: true,
+        intensity: 1.2,
+        luminanceThreshold: 1.0,
+        luminanceSmoothing: 0.3,
+    })
+    composer.addPass(new EffectPass(camera, bloomEffect, new SMAAEffect()))
 
     // CSS renderer
     cssRenderer = new CSS3DRenderer();
@@ -336,12 +339,18 @@ const initRenderer = () => {
     cssScene.scale.set(0.1, 0.1, 0.1)
 }
 
+/**
+ * The floor: a shader-drawn neon grid that fades into the fog with distance
+ */
 const addSurfacePlane = () => {
-    surfacePlaneMaterial = new THREE.MeshLambertMaterial({
-        opacity: 0.4,
-        color: new THREE.Color(COLOR2),
-        side: THREE.DoubleSide,
-        transparent: true
+    surfacePlaneMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            uBaseColor: { value: new THREE.Color(BACKGROUND_COLOR).multiplyScalar(1.4) },
+            uLineColor: { value: new THREE.Color(COLOR4) },
+            uAccentColor: { value: new THREE.Color(COLOR5) },
+        },
+        vertexShader: gridVertexShader,
+        fragmentShader: gridFragmentShader,
     })
     const planeGeometry = new THREE.PlaneGeometry(PLANE_SIZE, PLANE_SIZE)
     const plane = new THREE.Mesh(
@@ -352,6 +361,48 @@ const addSurfacePlane = () => {
     plane.position.set(0, -2.1, 0)
 
     scene.add(plane)
+}
+
+/**
+ * Faint drifting motes of light along the whole path for depth and parallax
+ */
+const addDustParticles = () => {
+    const count = 1300
+    const positions = new Float32Array(count * 3)
+
+    for (let i = 0; i < count; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 240
+        positions[i * 3 + 1] = Math.random() * 45 - 2
+        positions[i * 3 + 2] = 150 - Math.random() * 1400
+    }
+
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+
+    // Soft round sprite so the motes don't render as hard squares
+    const size = 64
+    const spriteCanvas = document.createElement('canvas')
+    spriteCanvas.width = spriteCanvas.height = size
+    const ctx = spriteCanvas.getContext('2d')
+    const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
+    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.4)')
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, size, size)
+
+    const material = new THREE.PointsMaterial({
+        color: new THREE.Color(COLOR4).multiplyScalar(1.5),
+        map: new THREE.CanvasTexture(spriteCanvas),
+        size: 0.5,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: 0.5,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+    })
+
+    scene.add(new THREE.Points(geometry, material))
 }
 
 /**
@@ -376,12 +427,16 @@ const addCurvePath = () => {
     ] );
     curvePath.closed = false;
     
-    // SHOW LINE
+    // The path renders as a glowing energy conduit running along the floor.
+    // HDR color so the bloom pass gives it a neon halo.
     const geometry = new THREE.TubeGeometry(curvePath, 1028, 0.05, 3, false)
-    const material = new THREE.MeshPhongMaterial({ color: COLOR4, side: THREE.DoubleSide });
+    const material = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(COLOR4).multiplyScalar(2.5),
+        side: THREE.DoubleSide,
+    });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.y = -4
-    
+
     scene.add(mesh)
 }
 
@@ -408,57 +463,46 @@ const resetCurvePath = () => {
  * =======================================================================
  */
 const addAboutGraph = async (font) => {
-    // skillsGraph = await loadModel("./models/bars.glb");
-    // skillsGraph.rotation.z -= Math.PI / 14
-    // skillsGraph.rotation.y -= Math.PI / 3.4
-
-    // skillsGraphGroup.add(skillsGraph)
-    // skillsGraphGroup.position.set(-33, -3, -13)
-    // skillsGraphGroup.scale.set(0, 0, 0)
-
-    // scene.add(skillsGraphGroup)
     skillsGraph = createBarGraph(font);
 
     skillsGraph.position.set(-10, 14, -10)
     skillsGraph.rotation.set(Math.PI, Math.PI * 1.7, Math.PI / 2)
-    // gui.add(skillsGraph.position, 'x').min(-200).max(200).step(1)
-    // gui.add(skillsGraph.position, 'y').min(-200).max(200).step(1)
-    // gui.add(skillsGraph.position, 'z').min(-200).max(200).step(1)
     scene.add(skillsGraph)
 }
 
 /**
- * Animate about graph to be visible
+ * Animate about graph to be visible. Each bar group holds a translucent
+ * body and a neon edge wireframe (see createBarGraph); labels are meshes.
  */
 const animateAboutGraph = (show) => {
     for (let i = 0; i < skillsGraph.children.length; i++) {
         const barGroup = skillsGraph.children[i];
-        
+
         // Random delay for staggered animation
         const delay = Math.random() * 0.5;
-        
+
         if (barGroup instanceof THREE.Group) {
-            // Animate the main wireframe
-            const mainWireframe = barGroup.children[barGroup.children.length - 1];
-            gsap.to(mainWireframe.material, {
+            const [body, edges] = barGroup.children
+
+            gsap.to(edges.material, {
                 opacity: show ? 1 : 0,
                 duration: 0.8,
                 delay: delay,
                 ease: 'power2.inOut'
             });
-            
-            // Animate each glow layer
-            for (let j = 0; j < barGroup.children.length - 1; j++) {
-                const glowMesh = barGroup.children[j];
-                const targetOpacity = show ? 
-                    0.15 * (1 - j / (barGroup.children.length - 1)) : 0;
-                
-                gsap.to(glowMesh.material, {
-                    opacity: targetOpacity,
-                    duration: 1,
-                    delay: delay,
-                    ease: 'power2.inOut'
-                });
+
+            gsap.to(body.material, {
+                opacity: show ? 0.16 : 0,
+                duration: 1,
+                delay: delay,
+                ease: 'power2.inOut'
+            });
+
+            if (show) {
+                gsap.fromTo(barGroup.scale,
+                    { x: 0.6, y: 0.6, z: 0.6 },
+                    { x: 1, y: 1, z: 1, duration: 1.2, delay: delay, ease: 'elastic.out(1, 0.6)' }
+                );
             }
         } else if (barGroup instanceof THREE.Mesh) {
             // Animate the text
@@ -594,14 +638,31 @@ const animateSkillsText = (show = true) => {
  * Content cards
  * ============================================================================
  */
-const addAboutText = () => {
+/**
+ * Build a floating HUD-style card with a small section label above the copy
+ */
+const createContentCard = (label, copy, wide = false) => {
     const content = document.createElement('div')
-    content.className = 'content-card'
+    content.className = wide ? 'content-card wide' : 'content-card'
+
+    const cardLabel = document.createElement('span')
+    cardLabel.className = 'content-card__label'
+    cardLabel.innerText = label
+    content.appendChild(cardLabel)
 
     const text = document.createElement('p')
     text.className = 'content-card__text'
-    text.innerText = "I am a web developer from Boston with passion for building fun and interactive front-end experiences."
+    text.innerText = copy
     content.appendChild(text)
+
+    return content
+}
+
+const addAboutText = () => {
+    const content = createContentCard(
+        '01 · About',
+        "I am a web developer from Boston with passion for building fun and interactive front-end experiences."
+    )
 
     aboutContent = new CSS3DObject(content);
     aboutContent.position.set(370, 60, 250)
@@ -610,13 +671,10 @@ const addAboutText = () => {
 }
 
 const addSkillsText = () => {
-    const content = document.createElement('div')
-    content.className = 'content-card'
-
-    const text = document.createElement('p')
-    text.className = 'content-card__text'
-    text.innerText = "Some of my primary technical knowledge includes the following."
-    content.appendChild(text)
+    const content = createContentCard(
+        '02 · Core Stack',
+        "Some of my primary technical knowledge includes the following."
+    )
 
     skillsText = new CSS3DObject(content);
     skillsText.position.set(125, 60, -120)
@@ -626,13 +684,10 @@ const addSkillsText = () => {
 }
 
 const addSkillsCloudText = () => {
-    const content = document.createElement('div')
-    content.className = 'content-card'
-
-    const text = document.createElement('p')
-    text.className = 'content-card__text'
-    text.innerText = "Other familiar libraries, languages, and technologies that I've worked with include the following."
-    content.appendChild(text)
+    const content = createContentCard(
+        '03 · Toolbox',
+        "Other familiar libraries, languages, and technologies that I've worked with include the following."
+    )
 
     skillsCloudText = new CSS3DObject(content)
     skillsCloudText.position.set(-300, 65, -520)
@@ -642,17 +697,15 @@ const addSkillsCloudText = () => {
 }
 
 const addProjectsIntroText = () => {
-    const content = document.createElement('div')
-    content.className = 'content-card wide'
-
-    const text = document.createElement('p')
-    text.className = 'content-card__text'
-    text.innerText = "Here are some fun projects (that I'm allowed to mention) that I've worked on over the years."
-    content.appendChild(text)
+    const content = createContentCard(
+        '04 · Selected Work',
+        "Here are some fun projects (that I'm allowed to mention) that I've worked on over the years.",
+        true
+    )
 
     projectsIntroText = new CSS3DObject(content);
     projectsIntroText.position.set(10, 150, -1250)
-    
+
     cssScene.add(projectsIntroText)
 }
 
@@ -736,8 +789,6 @@ const addContactSection = () => {
  * Animate
  */
 const tick = () => {
-    // stats.begin()
-
     const elapsedTime = clock.getElapsedTime()
     
     // Calculate frames per second of the screen
@@ -852,6 +903,7 @@ const tick = () => {
     }
 
     if (percentageComplete < PROJECT_0_THRESHOLD && project0Active) {
+        disposeGroup(project0Group)
         scene.remove(project0Group)
         project0Group = null
         project0Active = false
@@ -870,6 +922,7 @@ const tick = () => {
     }
 
     if (percentageComplete < PROJECT_1_THRESHOLD && project1Active) {
+        disposeGroup(project1Group)
         scene.remove(project1Group)
         project1Group = null
         project1Active = false
@@ -888,6 +941,7 @@ const tick = () => {
     }
 
     if (percentageComplete < PROJECT_2_THRESHOLD && project2Active) {
+        disposeGroup(project2Group)
         scene.remove(project2Group)
         project2Group = null
         project2Active = false
@@ -906,6 +960,7 @@ const tick = () => {
     }
 
     if (percentageComplete < PROJECT_3_THRESHOLD && project3Active) {
+        disposeGroup(project3Group)
         scene.remove(project3Group)
         project3Group = null
         project3Active = false
@@ -924,6 +979,7 @@ const tick = () => {
     }
 
     if (percentageComplete < PROJECT_4_THRESHOLD && project4Active) {
+        disposeGroup(project4Group)
         scene.remove(project4Group)
         project4Group = null
         project4Active = false
@@ -942,6 +998,7 @@ const tick = () => {
     }
 
     if (percentageComplete < PROJECT_5_THRESHOLD && project5Active) {
+        disposeGroup(project5Group)
         scene.remove(project5Group)
         project5Group = null
         project5Active = false
@@ -960,6 +1017,7 @@ const tick = () => {
     }
 
     if (percentageComplete < PROJECT_6_THRESHOLD && project6Active) {
+        disposeGroup(project6Group)
         scene.remove(project6Group)
         project6Group = null
         project6Active = false
@@ -986,15 +1044,13 @@ const tick = () => {
     }
 
     // Render
-    renderer.render(scene, camera)
+    composer.render()
     cssRenderer.render(cssScene, camera);
 
     lastTime = now
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
-
-    // stats.end()
 }
 
 const init = () => {
@@ -1010,8 +1066,8 @@ const init = () => {
     addResetListener()
     // Sections
     addSurfacePlane()
+    addDustParticles()
     addIntroContent()
-    // addAboutGraph()
     addAboutText()
     addSkillsText()
     addSkillsCloud()

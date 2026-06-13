@@ -1,6 +1,7 @@
 attribute vec3 aRandom;
 
 varying vec3 vPosition;
+varying vec3 vRandom;
 
 uniform float uTime;
 uniform float uScale;
@@ -8,6 +9,7 @@ uniform float uCameraZ;
 
 void main() {
     vPosition = position;
+    vRandom = aRandom;
 
     float time = uTime * 4.0;
     float scrollEffect = uCameraZ * 0.25;
@@ -25,5 +27,6 @@ void main() {
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
-    gl_PointSize = 25.0 / -mvPosition.z;
+    // Vary particle sizes so the figure reads as layered points of light
+    gl_PointSize = (22.0 + abs(aRandom.y) * 26.0) / -mvPosition.z;
 }
