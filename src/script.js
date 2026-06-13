@@ -10,6 +10,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { PositionAlongPathState } from "./PositionAlongPathState"
 import { handleScroll, updatePosition } from './PositionAlongPathMethods'
 import { loadParticlesModel, disposeGroup } from "./model.js"
+import { QUALITY, downgradeQuality } from "./quality.js"
 import { createBarGraph } from './barGraph.js'
 import { skills } from './constants/skills.js'
 import gridVertexShader from './shaders/gridVertexShader.glsl'
@@ -73,8 +74,13 @@ let camera = null
 let renderer = null
 let composer = null
 let cssRenderer = null
+let usePostProcessing = QUALITY.bloom
 let lastTime = performance.now()
 let initialScrollValuesSet = false
+// Live quality probe: average FPS over a window after warmup, downgrade once
+let qualityChecked = false
+let fpsSampleCount = 0
+let fpsSampleAccum = 0
 let curvePath = null
 let scrollY = 0
 let surfacePlaneMaterial = null
@@ -220,8 +226,8 @@ const addResizeListener = () => {
     
         // Update renderer
         renderer.setSize(sizes.width, sizes.height)
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-        composer.setSize(sizes.width, sizes.height)
+        renderer.setPixelRatio(QUALITY.pixelRatio)
+        if (composer) composer.setSize(sizes.width, sizes.height)
 
         // Update CSS renderer
         cssRenderer.setSize(sizes.width, sizes.height)
@@ -306,7 +312,7 @@ const initRenderer = () => {
         stencil: false,
     })
     renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(QUALITY.pixelRatio)
 
     // Atmosphere
     scene.background = new THREE.Color(BACKGROUND_COLOR)
@@ -318,16 +324,19 @@ const initRenderer = () => {
     scene.environmentIntensity = 0.65
     pmremGenerator.dispose()
 
-    // Post-processing: HDR buffer -> bloom + SMAA
-    composer = new EffectComposer(renderer, { frameBufferType: THREE.HalfFloatType })
-    composer.addPass(new RenderPass(scene, camera))
-    const bloomEffect = new BloomEffect({
-        mipmapBlur: true,
-        intensity: 1.2,
-        luminanceThreshold: 1.0,
-        luminanceSmoothing: 0.3,
-    })
-    composer.addPass(new EffectPass(camera, bloomEffect, new SMAAEffect()))
+    // Post-processing: HDR buffer -> bloom + SMAA. Skipped on the low tier,
+    // where we render the scene directly (neon still shows, just no halo/AA).
+    if (QUALITY.bloom) {
+        composer = new EffectComposer(renderer, { frameBufferType: THREE.HalfFloatType })
+        composer.addPass(new RenderPass(scene, camera))
+        const bloomEffect = new BloomEffect({
+            mipmapBlur: true,
+            intensity: QUALITY.bloomIntensity,
+            luminanceThreshold: 1.0,
+            luminanceSmoothing: 0.3,
+        })
+        composer.addPass(new EffectPass(camera, bloomEffect, new SMAAEffect()))
+    }
 
     // CSS renderer
     cssRenderer = new CSS3DRenderer();
@@ -802,6 +811,26 @@ const tick = () => {
         positionAlongPathState.lengthToScroll = fps > 60 ? INITIAL_SCROLL_DISTANCE_FAST : INITIAL_SCROLL_DISTANCE_DEFAULT
     }
 
+    // Live quality probe: after a warmup (intro animation settles), average FPS
+    // over a window. If a machine we judged capable is actually struggling,
+    // downgrade the cheap live knobs once (resolution + bloom).
+    if (!qualityChecked && elapsedTime > 2) {
+        fpsSampleAccum += fps
+        fpsSampleCount++
+
+        if (fpsSampleCount >= 90) {
+            const averageFps = fpsSampleAccum / fpsSampleCount
+
+            if (averageFps < 45 && downgradeQuality()) {
+                usePostProcessing = false
+                renderer.setPixelRatio(QUALITY.pixelRatio)
+                if (composer) composer.setSize(sizes.width, sizes.height)
+            }
+
+            qualityChecked = true
+        }
+    }
+
     if (sceneModel) {
         sceneModel.material.uniforms.uTime.value = elapsedTime
         sceneModel.material.uniforms.uCameraZ.value = scrollY
@@ -1043,8 +1072,12 @@ const tick = () => {
         contactSection.quaternion.copy(camera.quaternion)
     }
 
-    // Render
-    composer.render()
+    // Render: through the bloom composer when enabled, otherwise straight to screen
+    if (usePostProcessing && composer) {
+        composer.render()
+    } else {
+        renderer.render(scene, camera)
+    }
     cssRenderer.render(cssScene, camera);
 
     lastTime = now

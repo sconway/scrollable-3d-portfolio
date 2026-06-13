@@ -5,6 +5,7 @@ import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler'
 import vertex from './shaders/vertexShader.glsl'
 import fragment from './shaders/fragmentShader.glsl'
 import { COLOR4, COLOR5 } from './constants'
+import { QUALITY } from './quality.js'
 
 const loader = new GLTFLoader()
 const dracoLoader = new DRACOLoader()
@@ -62,10 +63,13 @@ export const applyDeviceStyle = (group) => {
         })
         child.material = Array.isArray(child.material) ? styled : styled[0]
 
-        // Trace the feature edges of the mesh with neon lines
-        const edges = new THREE.EdgesGeometry(child.geometry, 25)
-        const line = new THREE.LineSegments(edges, edgeLineMaterial)
-        child.add(line)
+        // Trace the feature edges of the mesh with neon lines. Each mesh adds a
+        // LineSegments draw call, so this is skipped entirely on the low tier.
+        if (QUALITY.edgeGlow) {
+            const edges = new THREE.EdgesGeometry(child.geometry, 25)
+            const line = new THREE.LineSegments(edges, edgeLineMaterial)
+            child.add(line)
+        }
     })
 
     return group
@@ -110,7 +114,7 @@ export const loadParticlesModel = (filePath, color1, color2) => {
 
             // Particles geometry
             const sampler = new MeshSurfaceSampler(mesh).build()
-            const numParticles = 25000
+            const numParticles = QUALITY.particleCount
             const particlesGeometry = new THREE.BufferGeometry()
             const particlesPosition = new Float32Array(numParticles * 3)
             const particlesRandomness = new Float32Array(numParticles * 3)
