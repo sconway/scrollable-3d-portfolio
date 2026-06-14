@@ -746,7 +746,7 @@ const addProjectsText = () => {
     project7Text = addProjectText(cssScene, 'project7', PROJECT_7_CSS_Z)
 }
 
-// DecorAI
+// DecorAIt
 const addProject0 = () => {
     project0Group = new THREE.Group()
     const project0models = [
