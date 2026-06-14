@@ -20,6 +20,22 @@ const edgeLineMaterial = new THREE.LineBasicMaterial({
     opacity: 0.85,
 })
 
+let maxAnisotropy = 16
+
+export const setDeviceTextureQuality = (anisotropy) => {
+    maxAnisotropy = anisotropy
+}
+
+const enhanceScreenMap = (map, showcase = false) => {
+    map.anisotropy = maxAnisotropy
+    map.minFilter = showcase ? THREE.LinearFilter : THREE.LinearMipmapLinearFilter
+    map.magFilter = THREE.LinearFilter
+    map.generateMipmaps = !showcase
+    map.colorSpace = THREE.SRGBColorSpace
+    map.needsUpdate = true
+    return map
+}
+
 // Dark glossy body shared by all device frames
 const deviceBodyMaterial = new THREE.MeshStandardMaterial({
     color: 0x0c1117,
@@ -28,14 +44,18 @@ const deviceBodyMaterial = new THREE.MeshStandardMaterial({
 })
 
 export const loadModel = (filePath) => {
+    const url = import.meta.env.DEV ? `${filePath}?v=${Date.now()}` : filePath
+
     return new Promise((resolve, reject) => {
         loader.load(
-            filePath,
+            url,
             (obj) => {
                 const group = new THREE.Group()
                 group.add(...obj.scene.children)
                 resolve(group)
-            }
+            },
+            undefined,
+            reject,
         )
     })
 }
@@ -46,26 +66,37 @@ export const loadModel = (filePath) => {
  * - body panels become dark glossy metal
  * - feature edges get traced with glowing neon lines
  */
-export const applyDeviceStyle = (group) => {
+export const applyDeviceStyle = (group, options = {}) => {
+    const {
+        showcase = false,
+        screenBrightness = showcase ? 1.0 : 1.05,
+        skipScreenEdges = showcase,
+    } = options
+
     group.traverse((child) => {
         if (!child.isMesh) return
 
         const materials = Array.isArray(child.material) ? child.material : [child.material]
+        const hasScreen = materials.some((material) => material.map)
         const styled = materials.map((material) => {
             if (material.map) {
-                // Screen: render unlit, just barely over-bright so the
-                // brightest pixels read as backlit without hazing the content
-                const screenMaterial = new THREE.MeshBasicMaterial({ map: material.map })
-                screenMaterial.color.setScalar(1.05)
+                const screenMaterial = new THREE.MeshBasicMaterial({
+                    map: enhanceScreenMap(material.map, showcase),
+                    toneMapped: false,
+                    side: THREE.DoubleSide,
+                })
+                screenMaterial.color.setScalar(screenBrightness)
                 return screenMaterial
             }
             return deviceBodyMaterial
         })
         child.material = Array.isArray(child.material) ? styled : styled[0]
 
-        // Trace the feature edges of the mesh with neon lines. Each mesh adds a
-        // LineSegments draw call, so this is skipped entirely on the low tier.
-        if (QUALITY.edgeGlow) {
+        if (hasScreen && showcase) {
+            child.renderOrder = 2
+        }
+
+        if (QUALITY.edgeGlow && !(skipScreenEdges && hasScreen)) {
             const edges = new THREE.EdgesGeometry(child.geometry, 25)
             const line = new THREE.LineSegments(edges, edgeLineMaterial)
             child.add(line)
@@ -124,15 +155,15 @@ export const loadParticlesModel = (filePath, color1, color2) => {
                 sampler.sample(newPosition)
 
                 particlesPosition.set([
-                    newPosition.x, // 0, 3, 6, 9 ...
-                    newPosition.y, // 1, 4, 7, 10 ...
-                    newPosition.z  // 2, 5, 8, 11 ...
+                    newPosition.x,
+                    newPosition.y,
+                    newPosition.z
                 ], i * 3)
 
                 particlesRandomness.set([
-                    Math.random() * 2 - 1, // -1 <> 1
-                    Math.random() * 2 - 1, // -1 <> 1
-                    Math.random() * 2 - 1 // -1 <> 1
+                    Math.random() * 2 - 1,
+                    Math.random() * 2 - 1,
+                    Math.random() * 2 - 1
                 ], i * 3)
             }
 
@@ -145,7 +176,6 @@ export const loadParticlesModel = (filePath, color1, color2) => {
                 new THREE.BufferAttribute(particlesRandomness, 3)
             )
 
-            // Particles
             const particles = new THREE.Points(particlesGeometry, particlesMaterial)
 
             resolve(particles)

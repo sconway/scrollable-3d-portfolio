@@ -9,7 +9,7 @@ import { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { PositionAlongPathState } from "./PositionAlongPathState"
 import { handleScroll, updatePosition } from './PositionAlongPathMethods'
-import { loadParticlesModel, disposeGroup } from "./model.js"
+import { loadParticlesModel, disposeGroup, setDeviceTextureQuality } from "./model.js"
 import { QUALITY, downgradeQuality } from "./quality.js"
 import { createBarGraph } from './barGraph.js'
 import { skills } from './constants/skills.js'
@@ -20,6 +20,7 @@ import { COLOR3, COLOR4, COLOR5, BACKGROUND_COLOR, SECTION_SIZE,
     PLANE_SIZE,
     CURVE_PATH_HEIGHT,
     END_POINT,
+    CONTACT_PATH_END,
     ABOUT_THRESHOLD,
     SKILLS_GRAPH_TEXT_THRESHOLD,
     SKILLS_CLOUD_TEXT_THRESHOLD,
@@ -31,13 +32,17 @@ import { COLOR3, COLOR4, COLOR5, BACKGROUND_COLOR, SECTION_SIZE,
     PROJECT_4_THRESHOLD,
     PROJECT_5_THRESHOLD,
     PROJECT_6_THRESHOLD,
+    PROJECT_7_THRESHOLD,
     CONTACT_SECTION_THRESHOLD,
+    PROJECT_7_CSS_Z,
+    CONTACT_CSS_Z,
+    CONTACT_CSS_Y,
     INITIAL_SCROLL_DISTANCE_FAST,
     INITIAL_SCROLL_DISTANCE_DEFAULT,
     PROJECTS_SCROLL_DISTANCE_FAST,
     PROJECTS_SCROLL_DISTANCE_DEFAULT,
 } from "./constants"
-import { addMobileProject, addProject, addProjectText } from "./projects/index.js"
+import { addDualDeviceProject, addMobileProject, addProject, addProjectText, addTvLaptopProject } from "./projects/index.js"
 
 
 const canvas = document.getElementById('canvas')
@@ -62,6 +67,7 @@ let project3Group = null
 let project4Group = null
 let project5Group = null
 let project6Group = null
+let project7Group = null
 // Viewport size
 const sizes = {
     width: window.innerWidth,
@@ -102,6 +108,7 @@ let project3Active = null
 let project4Active = null
 let project5Active = null
 let project6Active = null
+let project7Active = null
 let contactSectionActive = null
 let project0Text = null
 let project1Text = null
@@ -110,6 +117,7 @@ let project3Text = null
 let project4Text = null
 let project5Text = null
 let project6Text = null
+let project7Text = null
 let contactSection = null
 
 
@@ -278,7 +286,7 @@ const addMouseListener = () => {
  * Camera
  */
 const initCamera = () => {
-    camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000)
+    camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 3000)
 
     camera.position.copy(curvePath.getPointAt(0))
     camera.lookAt(curvePath.getPointAt(0.01))
@@ -313,6 +321,7 @@ const initRenderer = () => {
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(QUALITY.pixelRatio)
+    setDeviceTextureQuality(renderer.capabilities.getMaxAnisotropy())
 
     // Atmosphere
     scene.background = new THREE.Color(BACKGROUND_COLOR)
@@ -433,6 +442,9 @@ const addCurvePath = () => {
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 1.75),
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, -SCENE_SIZE * 2),
         new THREE.Vector3(0, CURVE_PATH_HEIGHT, END_POINT),
+        // Continue past the last project and stop at the contact area
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, -1160),
+        new THREE.Vector3(0, CURVE_PATH_HEIGHT, CONTACT_PATH_END),
     ] );
     curvePath.closed = false;
     
@@ -731,55 +743,67 @@ const addProjectsText = () => {
     project4Text = addProjectText(cssScene, 'project4', -7800)
     project5Text = addProjectText(cssScene, 'project5', -9000)
     project6Text = addProjectText(cssScene, 'project6', -10200)
+    project7Text = addProjectText(cssScene, 'project7', PROJECT_7_CSS_Z)
 }
 
-// Dev samples
+// DecorAI
 const addProject0 = () => {
     project0Group = new THREE.Group()
-    const project0models = ['./models/devsamples-screen.glb', './models/devsamples-macbook.glb', './models/devsamples-iphone.glb']
+    const project0models = [
+        './models/decorai-screen-hq.glb',
+        './models/decorai-macbook-hq.glb',
+        './models/decorai-iphone-hq.glb',
+    ]
     addProject(scene, project0Group, project0models, -270)
 }
 
-// ARC
+// Dev samples
 const addProject1 = () => {
     project1Group = new THREE.Group()
-    const project1models = ['./models/tweets-screen.glb', './models/tweets-macbook.glb', './models/tweets-screen2.glb']
-    addProject(scene, project1Group, project1models, -390)
+    const project1models = ['./models/devsamples-macbook-hq.glb', './models/devsamples-iphone-hq.glb']
+    addDualDeviceProject(scene, project1Group, project1models, -390)
 }
 
- // TD/Traveler
+// Global Tweets
 const addProject2 = () => {
     project2Group = new THREE.Group()
-    const project2models = ['./models/td-iphone.glb', './models/td-iphone2.glb', './models/td-iphone3.glb']
-    addMobileProject(scene, project2Group, project2models, -510)
+    const project2models = ['./models/tweets-screen-hq.glb', './models/tweets-macbook-hq.glb']
+    addTvLaptopProject(scene, project2Group, project2models, -510)
+}
+
+// Tour Director/Traveler
+const addProject3 = () => {
+    project3Group = new THREE.Group()
+    const project3models = ['./models/td-iphone.glb', './models/td-iphone2.glb', './models/td-iphone3.glb']
+    addMobileProject(scene, project3Group, project3models, -630, { middlePhoneY: -1 })
 }
 
 // Father Peyton
-const addProject3 = () => {
-    project3Group = new THREE.Group()
-    const project3models = ['./models/fp-screen.glb', './models/fp-macbook.glb', './models/fp-iphone.glb']
-    addProject(scene, project3Group, project3models, -630)
-}
-
- // Transit Tracker
 const addProject4 = () => {
     project4Group = new THREE.Group()
-    const project4models = ['./models/tt-iphone.glb', './models/tt-iphone2.glb', './models/tt-iphone3.glb']
-    addMobileProject(scene, project4Group, project4models, -750)
-}
- 
-// Covid Tracker
-const addProject5 = () => {
-    project5Group = new THREE.Group()
-    const project5models = ['./models/covid-screen.glb', './models/covid-macbook.glb', './models/covid-screen2.glb']
-    addProject(scene, project5Group, project5models, -870)
+    const project4models = ['./models/fp-screen.glb', './models/fp-macbook.glb', './models/fp-iphone.glb']
+    addProject(scene, project4Group, project4models, -750)
 }
 
-// World Tweets
+// Transit Tracker
+const addProject5 = () => {
+    project5Group = new THREE.Group()
+    const project5models = ['./models/tt-iphone.glb', './models/tt-iphone2.glb', './models/tt-iphone3.glb']
+    addMobileProject(scene, project5Group, project5models, -870, { middlePhoneY: -1 })
+}
+
+// Covid Tracker
 const addProject6 = () => {
     project6Group = new THREE.Group()
-    const project6models = ['./models/arc-screen.glb', './models/arc-macbook.glb', './models/arc-iphone.glb']
+    const project6models = ['./models/covid-screen.glb', './models/covid-macbook.glb', './models/covid-screen2.glb']
     addProject(scene, project6Group, project6models, -990)
+}
+
+// Arc Advisory Group
+const addProject7 = () => {
+    project7Group = new THREE.Group()
+    const project7models = ['./models/arc-screen.glb', './models/arc-macbook.glb', './models/arc-iphone.glb']
+    addProject(scene, project7Group, project7models, -1110)
 }
 
 /**
@@ -789,8 +813,10 @@ const addProject6 = () => {
  */
 const addContactSection = () => {
     const content = document.getElementById('contactSection')
-    contactSection = new CSS3DObject(content);
-    contactSection.position.set(0, 100, -12600)
+
+    contactSection = new CSS3DObject(content)
+    // Centered at eye level so the full section stays framed when the camera stops.
+    contactSection.position.set(0, CONTACT_CSS_Y, CONTACT_CSS_Z)
     cssScene.add(contactSection)
 }
 
@@ -1057,10 +1083,37 @@ const tick = () => {
         project6Text.quaternion.copy(camera.quaternion)
     }
 
-    // Contact section
+    // Project 7
+    if (percentageComplete >= PROJECT_7_THRESHOLD && !project7Active) {
+        addProject7()
+        project7Active = true
+        project7Text.element.classList.add('active')
+    }
+
+    if (percentageComplete < PROJECT_7_THRESHOLD && project7Active) {
+        disposeGroup(project7Group)
+        scene.remove(project7Group)
+        project7Group = null
+        project7Active = false
+        project7Text.element.classList.remove('active')
+    }
+
+    if (project7Text && project7Active) {
+        project7Text.quaternion.copy(camera.quaternion)
+    }
+
+    // Contact section — immediately after the final project
     if (percentageComplete >= CONTACT_SECTION_THRESHOLD && !contactSectionActive) {
         contactSectionActive = true
         contactSection.element.classList.add('active')
+
+        if (project7Active) {
+            disposeGroup(project7Group)
+            scene.remove(project7Group)
+            project7Group = null
+            project7Active = false
+            project7Text.element.classList.remove('active')
+        }
     }
 
     if (percentageComplete < CONTACT_SECTION_THRESHOLD && contactSectionActive) {

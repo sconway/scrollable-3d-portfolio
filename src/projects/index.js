@@ -22,6 +22,54 @@ const animateToScale = (group, x, y, z) => {
     })
 }
 
+const showcaseStyle = { showcase: true }
+
+export const addDualDeviceProject = async (scene, group, modelPaths, z) => {
+    scene.add(group)
+
+    const [laptop, phone] = await Promise.all(modelPaths.map(m => loadModel(m)))
+    applyDeviceStyle(laptop)
+    applyDeviceStyle(phone)
+
+    laptop.rotation.y -= Math.PI / 9
+    laptop.rotation.x += Math.PI / 12
+    laptop.rotation.z += Math.PI / 52
+    animateToPosition(laptop, 0, 1, -5)
+    animateToScale(laptop, 4.6, 4.6, 4.6)
+
+    phone.rotation.y -= Math.PI / 5
+    phone.rotation.x += Math.PI / 18
+    animateToPosition(phone, 15, 5, 5)
+    animateToScale(phone, 3.8, 3.8, 3.8)
+
+    group.position.set(12, 0, z)
+    group.add(laptop, phone)
+}
+
+export const addTvLaptopProject = async (scene, group, modelPaths, z) => {
+    scene.add(group)
+
+    const [tv, laptop] = await Promise.all(modelPaths.map(m => loadModel(m)))
+    applyDeviceStyle(tv, showcaseStyle)
+    applyDeviceStyle(laptop, showcaseStyle)
+
+    // Use the original rotations that face screens toward the camera path.
+    tv.rotation.y += Math.PI / 14
+    tv.rotation.x += Math.PI / 20
+    animateToPosition(tv, -5, 11, -13)
+    animateToScale(tv, 6.3, 6.3, 6.3)
+
+    laptop.rotation.y -= Math.PI / 10
+    laptop.rotation.x += Math.PI / 14
+    laptop.rotation.z += Math.PI / 46
+    animateToPosition(laptop, 16, 3, 9)
+    animateToScale(laptop, 4.0, 4.0, 4.0)
+
+    group.position.set(12, 0, z)
+    group.rotation.y -= (12 * Math.PI) / 180
+    group.add(tv, laptop)
+}
+
 export const addProject = async (scene, group, modelPaths, z) => {
     scene.add(group)
 
@@ -49,7 +97,8 @@ export const addProject = async (scene, group, modelPaths, z) => {
     group.add(tv, laptop, iphone)
 }
 
-export const addMobileProject = async (scene, group, modelPaths, z) => {
+export const addMobileProject = async (scene, group, modelPaths, z, layout = {}) => {
+    const { middlePhoneY = -4 } = layout
     scene.add(group)
 
     // Load the project models to be placed
@@ -65,7 +114,7 @@ export const addMobileProject = async (scene, group, modelPaths, z) => {
     iphone2.rotation.y -= Math.PI / 10
     iphone2.rotation.x += Math.PI / 14
     iphone2.rotation.z += Math.PI / 46
-    animateToPosition(iphone2, 11, -4, -2)
+    animateToPosition(iphone2, 11, middlePhoneY, -2)
     animateToScale(iphone2, 4, 4, 4)
     iphone3.rotation.y -= Math.PI / 6
     animateToPosition(iphone3, 22, 6, 7)
