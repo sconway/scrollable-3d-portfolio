@@ -30,7 +30,6 @@ export const PROJECT_7_THRESHOLD = 0.853
 export const CONTACT_SECTION_THRESHOLD = 0.95
 
 // CSS scene z (world z ≈ value * CSS_SCENE_SCALE).
-// Contact sits ~200 world units behind the last project so it reads as a new section.
 export const PROJECT_7_CSS_Z = -11400
 export const CONTACT_CSS_Z = -13400
 // CSS scene y for the contact section, centered at camera eye height (CURVE_PATH_HEIGHT).

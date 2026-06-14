@@ -42,7 +42,7 @@ import { COLOR3, COLOR4, COLOR5, BACKGROUND_COLOR, SECTION_SIZE,
     PROJECTS_SCROLL_DISTANCE_FAST,
     PROJECTS_SCROLL_DISTANCE_DEFAULT,
 } from "./constants"
-import { addDualDeviceProject, addMobileProject, addProject, addProjectText, addTvLaptopProject } from "./projects/index.js"
+import { addDualDeviceProject, addMobileProject, addProject, addProjectText, addTvLaptopProject, addTwoTvLaptopProject } from "./projects/index.js"
 
 
 const canvas = document.getElementById('canvas')
@@ -757,45 +757,49 @@ const addProject0 = () => {
     addProject(scene, project0Group, project0models, -270)
 }
 
-// Dev samples
+// Made With AI
 const addProject1 = () => {
     project1Group = new THREE.Group()
-    const project1models = ['./models/devsamples-macbook-hq.glb', './models/devsamples-iphone-hq.glb']
-    addDualDeviceProject(scene, project1Group, project1models, -390)
+    const project1models = [
+        './models/made-with-ai-tv-1-hq.glb',
+        './models/made-with-ai-tv-2-hq.glb',
+        './models/made-with-ai-laptop-hq.glb',
+    ]
+    addTwoTvLaptopProject(scene, project1Group, project1models, -390)
 }
 
-// Global Tweets
+// Dev samples
 const addProject2 = () => {
     project2Group = new THREE.Group()
-    const project2models = ['./models/tweets-screen-hq.glb', './models/tweets-macbook-hq.glb']
-    addTvLaptopProject(scene, project2Group, project2models, -510)
-}
-
-// Tour Director/Traveler
-const addProject3 = () => {
-    project3Group = new THREE.Group()
-    const project3models = ['./models/td-iphone.glb', './models/td-iphone2.glb', './models/td-iphone3.glb']
-    addMobileProject(scene, project3Group, project3models, -630, { middlePhoneY: -1 })
-}
-
-// Father Peyton
-const addProject4 = () => {
-    project4Group = new THREE.Group()
-    const project4models = ['./models/fp-screen.glb', './models/fp-macbook.glb', './models/fp-iphone.glb']
-    addProject(scene, project4Group, project4models, -750)
+    const project2models = ['./models/devsamples-macbook-hq.glb', './models/devsamples-iphone-hq.glb']
+    addDualDeviceProject(scene, project2Group, project2models, -510)
 }
 
 // Transit Tracker
+const addProject3 = () => {
+    project3Group = new THREE.Group()
+    const project3models = ['./models/tt-iphone.glb', './models/tt-iphone2.glb', './models/tt-iphone3.glb']
+    addMobileProject(scene, project3Group, project3models, -630, { middlePhoneY: -1 })
+}
+
+// Global Tweets
+const addProject4 = () => {
+    project4Group = new THREE.Group()
+    const project4models = ['./models/tweets-screen-hq.glb', './models/tweets-macbook-hq.glb']
+    addTvLaptopProject(scene, project4Group, project4models, -750)
+}
+
+// Tour Director/Traveler
 const addProject5 = () => {
     project5Group = new THREE.Group()
-    const project5models = ['./models/tt-iphone.glb', './models/tt-iphone2.glb', './models/tt-iphone3.glb']
+    const project5models = ['./models/td-iphone.glb', './models/td-iphone2.glb', './models/td-iphone3.glb']
     addMobileProject(scene, project5Group, project5models, -870, { middlePhoneY: -1 })
 }
 
-// Covid Tracker
+// Father Peyton
 const addProject6 = () => {
     project6Group = new THREE.Group()
-    const project6models = ['./models/covid-screen.glb', './models/covid-macbook.glb', './models/covid-screen2.glb']
+    const project6models = ['./models/fp-screen.glb', './models/fp-macbook.glb', './models/fp-iphone.glb']
     addProject(scene, project6Group, project6models, -990)
 }
 

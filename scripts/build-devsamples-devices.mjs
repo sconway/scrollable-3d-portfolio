@@ -51,6 +51,21 @@ const BUILDS = [
         output: 'decorai-iphone-hq.glb',
         screenTexture: 'decorait-iphone.png',
     },
+    {
+        input: 'tweets-screen.glb',
+        output: 'made-with-ai-tv-1-hq.glb',
+        screenTexture: 'made-with-ai-tv-1.png',
+    },
+    {
+        input: 'tweets-screen.glb',
+        output: 'made-with-ai-tv-2-hq.glb',
+        screenTexture: 'made-with-ai-tv-2.png',
+    },
+    {
+        input: 'tweets-macbook.glb',
+        output: 'made-with-ai-laptop-hq.glb',
+        screenTexture: 'made-with-ai-laptop.png',
+    },
 ]
 
 const SCREEN_EXPORTS = [

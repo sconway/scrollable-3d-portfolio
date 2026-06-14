@@ -70,6 +70,37 @@ export const addTvLaptopProject = async (scene, group, modelPaths, z) => {
     group.add(tv, laptop)
 }
 
+export const addTwoTvLaptopProject = async (scene, group, modelPaths, z) => {
+    scene.add(group)
+
+    const [tv1, tv2, laptop] = await Promise.all(modelPaths.map(m => loadModel(m)))
+    applyDeviceStyle(tv1, showcaseStyle)
+    applyDeviceStyle(tv2, showcaseStyle)
+    applyDeviceStyle(laptop, showcaseStyle)
+
+    // Left to right: TV, laptop, TV — echoing the tv/laptop/phone layout but
+    // spread wider since both flanks are full-size TVs.
+    tv1.rotation.y += Math.PI / 14
+    tv1.rotation.x += Math.PI / 20
+    animateToPosition(tv1, -6, 10, -6)
+    animateToScale(tv1, 4.6, 4.6, 4.6)
+
+    laptop.rotation.y -= Math.PI / 10
+    laptop.rotation.x += Math.PI / 14
+    laptop.rotation.z += Math.PI / 46
+    animateToPosition(laptop, 9, 0, -2)
+    animateToScale(laptop, 3.6, 3.6, 3.6)
+
+    tv2.rotation.y -= Math.PI / 10
+    tv2.rotation.x += Math.PI / 20
+    animateToPosition(tv2, 24, 8, 7)
+    animateToScale(tv2, 4.6, 4.6, 4.6)
+
+    group.position.set(12, 0, z)
+    group.rotation.y -= (12 * Math.PI) / 180
+    group.add(tv1, laptop, tv2)
+}
+
 export const addProject = async (scene, group, modelPaths, z) => {
     scene.add(group)
 
