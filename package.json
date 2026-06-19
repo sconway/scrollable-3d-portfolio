@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:devices": "node scripts/build-devsamples-devices.mjs",
-    "deploy": "npm run build && gh-pages -d dist -t true"
+    "deploy": "npm run build && gh-pages -d dist --dotfiles --nojekyll"
   },
   "devDependencies": {
     "@gltf-transform/core": "^4.4.0",
