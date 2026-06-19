@@ -9,7 +9,7 @@ import { QUALITY } from './quality.js'
 
 const loader = new GLTFLoader()
 const dracoLoader = new DRACOLoader()
-dracoLoader.setDecoderPath('/draco/')
+dracoLoader.setDecoderPath(`${import.meta.env.BASE_URL}draco/`)
 loader.setDRACOLoader(dracoLoader)
 
 // Shared neon material for the glowing edge lines on device models.
