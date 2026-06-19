@@ -16,6 +16,10 @@ export const PROJECTS_SCROLL_DISTANCE_FAST = 1600
 
 // Section scroll thresholds (scaled for the path extended to CONTACT_PATH_END)
 export const ABOUT_THRESHOLD = 0.032
+// Hero explosion runs over a longer path segment than the about cutoff so fast
+// scrollers still see the burst (progress is path-based, not wheel delta magnitude).
+export const INTRO_EXPLOSION_PATH_END = 0.048
+export const INTRO_EXPLOSION_MAX = 130
 export const SKILLS_GRAPH_TEXT_THRESHOLD = 0.053
 export const SKILLS_CLOUD_TEXT_THRESHOLD = 0.091
 export const PROJECTS_TEXT_THRESHOLD = 0.143

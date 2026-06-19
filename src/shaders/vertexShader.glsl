@@ -12,16 +12,19 @@ void main() {
     vRandom = aRandom;
 
     float time = uTime * 4.0;
-    float scrollEffect = uCameraZ * 0.25;
+    float scrollEffect = uCameraZ * 0.22;
 
     vec3 pos = position;
     pos.x += sin(time * aRandom.x) * 0.025;
     pos.y += cos(time * aRandom.y) * 0.025;
     pos.z += scrollEffect * (abs(aRandom.z) / 8.0);
 
-    pos.x *= uScale + (sin(pos.y * 4.0 + time) * (1.0 - uScale)) + (abs(aRandom.x) * scrollEffect);
-    pos.y *= uScale + (cos(pos.z * 4.0 + time) * (1.0 - uScale)) + (abs(aRandom.y) * scrollEffect / 4.0);
-    pos.z *= uScale + (sin(pos.x * 4.0 + time) * (1.0 - uScale)) + (scrollEffect / 3.0);
+    // Drift upward as the figure explodes so particles stay above the floor plane
+    pos.y += scrollEffect * (0.16 + max(aRandom.y, 0.0) * 0.12);
+
+    pos.x *= uScale + (sin(pos.y * 4.0 + time) * (1.0 - uScale)) + (abs(aRandom.x) * scrollEffect * 0.9);
+    pos.y *= uScale + (cos(pos.z * 4.0 + time) * (1.0 - uScale)) + (max(aRandom.y, 0.0) * scrollEffect * 0.22);
+    pos.z *= uScale + (sin(pos.x * 4.0 + time) * (1.0 - uScale)) + (scrollEffect * 0.26);
 
     pos *= uScale;
 

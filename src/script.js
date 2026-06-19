@@ -22,6 +22,8 @@ import { COLOR3, COLOR4, COLOR5, BACKGROUND_COLOR, SECTION_SIZE,
     END_POINT,
     CONTACT_PATH_END,
     ABOUT_THRESHOLD,
+    INTRO_EXPLOSION_PATH_END,
+    INTRO_EXPLOSION_MAX,
     SKILLS_GRAPH_TEXT_THRESHOLD,
     SKILLS_CLOUD_TEXT_THRESHOLD,
     PROJECTS_TEXT_THRESHOLD,
@@ -861,13 +863,19 @@ const tick = () => {
         }
     }
 
-    if (sceneModel) {
-        sceneModel.material.uniforms.uTime.value = elapsedTime
-        sceneModel.material.uniforms.uCameraZ.value = scrollY
-    }
-
     // Update the camera position on our curve path as the user scrolls
     const percentageComplete = updatePosition(curvePath, camera, positionAlongPathState)
+
+    if (sceneModel) {
+        sceneModel.material.uniforms.uTime.value = elapsedTime
+        const explosionProgress = Math.min(
+            percentageComplete / INTRO_EXPLOSION_PATH_END,
+            1
+        )
+        // Ease-out so the burst spreads across more of the intro scroll
+        const easedExplosion = 1 - Math.pow(1 - explosionProgress, 2)
+        sceneModel.material.uniforms.uCameraZ.value = easedExplosion * INTRO_EXPLOSION_MAX
+    }
 
     scrollIndicator.style.height = percentageComplete * 100 + "%";
 
